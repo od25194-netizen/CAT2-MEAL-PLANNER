@@ -264,23 +264,40 @@ static async Task SeedRolesAsync(RoleManager<IdentityRole> rm)
 static async Task SeedAdminAsync(UserManager<ApplicationUser> um, IConfiguration cfg)
 {
     var email = cfg["Seed:AdminEmail"] ?? "danmclaston@gmail.com";
-    if (await um.FindByEmailAsync(email) != null) return;
-    var u = new ApplicationUser
+    var pass  = cfg["Seed:AdminPassword"] ?? "Admin@Passwords1233";
+    
+    var u = await um.FindByEmailAsync(email);
+    if (u == null)
     {
-        UserName        = email,
-        Email           = email,
-        FullName        = "Platform Admin",
-        EmailConfirmed  = true,
-        IsVerifiedChef  = true,
-        ChefLevel       = ChefLevel.Level8_GrandChef,
-        VerificationTick = VerificationTick.Gold
-    };
-    var r = await um.CreateAsync(u, cfg["Seed:AdminPassword"] ?? "Admin@Passwords1233");
-    if (r.Succeeded)
+        Log.Information("Seeding admin user {Email}...", email);
+        u = new ApplicationUser
+        {
+            UserName        = email,
+            Email           = email,
+            FullName        = "Platform Admin",
+            EmailConfirmed  = true,
+            IsVerifiedChef  = true,
+            ChefLevel       = ChefLevel.Level8_GrandChef,
+            VerificationTick = VerificationTick.Gold
+        };
+        var r = await um.CreateAsync(u, pass);
+        if (r.Succeeded)
+        {
+            Log.Information("Admin user {Email} created successfully.", email);
+            await um.AddToRoleAsync(u, "Admin");
+            await um.AddClaimAsync(u, new Claim("ChefLevel", "8"));
+            await um.AddClaimAsync(u, new Claim("IsVerifiedChef", "true"));
+        }
+        else
+        {
+            Log.Error("Failed to create admin user: {Errors}", string.Join(", ", r.Errors.Select(e => e.Description)));
+        }
+    }
+    else
     {
-        await um.AddToRoleAsync(u, "Admin");
-        await um.AddClaimAsync(u, new Claim("ChefLevel", "8"));
-        await um.AddClaimAsync(u, new Claim("IsVerifiedChef", "true"));
+        Log.Information("Admin user {Email} already exists. Ensuring password is correct...", email);
+        var token = await um.GeneratePasswordResetTokenAsync(u);
+        await um.ResetPasswordAsync(u, token, pass);
     }
 }
 
