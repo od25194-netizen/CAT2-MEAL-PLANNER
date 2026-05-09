@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: mymealplanner
+    env: docker
+    plan: free
+    region: oregon
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: mymealplanner-db
+          property: connectionString
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:8080
+    autoDeploy: true
+
+databases:
+  - name: mymealplanner-db
+    plan: free
+    region: oregon
