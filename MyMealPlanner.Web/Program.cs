@@ -275,7 +275,7 @@ static async Task SeedAdminAsync(UserManager<ApplicationUser> um, IConfiguration
         ChefLevel       = ChefLevel.Level8_GrandChef,
         VerificationTick = VerificationTick.Gold
     };
-    var r = await um.CreateAsync(u, cfg["Seed:AdminPassword"] ?? "passwords1233");
+    var r = await um.CreateAsync(u, cfg["Seed:AdminPassword"] ?? "Admin@Passwords1233");
     if (r.Succeeded)
     {
         await um.AddToRoleAsync(u, "Admin");
