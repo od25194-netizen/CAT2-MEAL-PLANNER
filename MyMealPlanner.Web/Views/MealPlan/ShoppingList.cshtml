@@ -67,19 +67,19 @@
     }
 
     <div class="row g-4 print-area" id="shopping-list">
-        @foreach (var section in sections)
+        @foreach (var grp in sections)
         {
-            var emoji = sectionEmojis.GetValueOrDefault(section.Key, "🛒");
+            var emoji = sectionEmojis.GetValueOrDefault(grp.Key, "🛒");
             <div class="col-12 col-md-6">
                 <div class="bg-white rounded-3 shadow-sm p-4">
                     <h5 class="fw-bold mb-3">
-                        @emoji @section.Key
+                        @emoji @grp.Key
                         <span class="tag tag-country ms-2" style="font-size:.75rem">
-                            @section.Count() items
+                            @grp.Count() items
                         </span>
                     </h5>
 
-                    @foreach (var item in section.OrderBy(i => i.IngredientName))
+                    @foreach (var item in grp.OrderBy(i => i.IngredientName))
                     {
                         <div class="shopping-item @(item.IsPurchased ? "checked" : "")"
                              id="item-@item.Id">

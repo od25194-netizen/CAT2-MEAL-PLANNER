@@ -6,7 +6,7 @@
     var ytEmbed     = ViewBag.YouTubeEmbed as string;
     var costInfo    = ViewBag.CostInfo as MyMealPlanner.Core.Models.IngredientCost;
     var relVideos   = ViewBag.RelatedVideos as List<YouTubeVideoDto> ?? new();
-    var multiplier  = (double)(ViewBag.ServingsMultiplier ?? 1.0);
+    var multiplier  = Convert.ToDecimal(ViewBag.ServingsMultiplier ?? 1.0m);
     var targetServ  = (int)(ViewBag.TargetServings ?? Model.Servings);
     var userLiked   = (bool)(ViewBag.UserHasLiked ?? false);
     var userSaved   = (bool)(ViewBag.UserHasSaved ?? false);

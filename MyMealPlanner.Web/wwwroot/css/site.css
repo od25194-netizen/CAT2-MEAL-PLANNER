@@ -799,3 +799,50 @@ img { max-width: 100%; border-radius: var(--radius-sm); }
 
 /* ── Main content push ────────────────────────────────────────── */
 .main-content { min-height: calc(100vh - var(--nav-h) - 400px); }
+
+/* Small responsive fixes to improve mobile experience */
+.notif-panel {
+  /* allow panel to shrink on small screens */
+  width: min(360px, 95vw);
+  right: 0.5rem;
+  left: auto;
+}
+
+.btn-icon, .btn-search {
+  /* ensure adequate touch targets */
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-box-wrap .d-flex { gap: .5rem; }
+
+@media (max-width: 576px) {
+  :root { --nav-h: 56px; }
+  .navbar-main { height: var(--nav-h); }
+  .brand-text { font-size: 1rem; }
+  .search-box-wrap { padding: .5rem 0; }
+  .search-box-wrap .d-flex { flex-direction: column; align-items: stretch; }
+  .search-input { width: 100%; padding: .6rem 1rem; }
+  .notif-panel {
+    top: calc(var(--nav-h) + 8px);
+    right: 0.5rem;
+    left: 0.5rem;
+    width: auto;
+    max-width: 95vw;
+  }
+  .dropdown-menu-rich { min-width: 180px; right: auto; left: 0; }
+  .hero { padding: 2.5rem 0 2rem; }
+  .profile-cover { height: 160px; }
+  .profile-avatar { width: 72px; height: 72px; }
+  .main-content { min-height: calc(100vh - var(--nav-h) - 300px); }
+}
+
+@media (max-width: 768px) {
+  .notif-panel { width: min(320px, 90vw); right: 1rem; left: auto; }
+  .hero-title { font-size: clamp(1.6rem, 4vw, 2.5rem); }
+  .hero-search-bar { max-width: 100%; padding: .5rem; }
+  .dropdown-menu-rich { min-width: 200px; }
+}

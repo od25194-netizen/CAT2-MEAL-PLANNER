@@ -42,7 +42,7 @@
     <div class="row g-3 mb-5">
         @foreach (var cat in allCategories)
         {
-            var meta   = nutrientMeta.GetValueOrDefault(cat, ("💊", "#6B7280", "", ""));
+            var meta   = nutrientMeta.GetValueOrDefault(cat, (emoji: "💊", color: "#6B7280", benefit: "", dailyTarget: ""));
             var active = selected == cat ? "active" : "";
 
             <div class="col-6 col-md-3 col-lg-2">
@@ -61,7 +61,7 @@
     <!-- ══ Selected Nutrient Detail ══════════════════════════════ -->
     @if (selected.HasValue)
     {
-        var meta = nutrientMeta.GetValueOrDefault(selected.Value, ("💊", "#6B7280", "", ""));
+        var meta = nutrientMeta.GetValueOrDefault(selected.Value, (emoji: "💊", color: "#6B7280", benefit: "", dailyTarget: ""));
 
         <div class="p-4 rounded-3 mb-5 fade-up"
              style="background:var(--white);border-top:4px solid @meta.color;box-shadow:var(--shadow)">
