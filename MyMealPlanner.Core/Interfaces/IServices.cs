@@ -1,5 +1,6 @@
 using MyMealPlanner.Core.Models;
 using MyMealPlanner.Core.Enums;
+using MyMealPlanner.Core.DTOs;
 
 namespace MyMealPlanner.Core.Interfaces;
 
@@ -116,7 +117,7 @@ public interface IFollowService
 public interface ISocialFeedService
 {
     Task<List<FeedItem>> GetPersonalFeedAsync(string userId, int page = 1, int pageSize = 20);
-    Task<List<FeedItem>> GetDiscoverFeedAsync(string userId, DiscoveryScope scope, string? scopeValue, int page = 1);
+    Task<List<FeedItem>> GetDiscoverFeedAsync(string userId, DiscoveryScope scope, string? scopeValue, int page = 1, int pageSize = 20);
 }
 
 // ── Quiz ─────────────────────────────────────────────────────

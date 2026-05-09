@@ -155,7 +155,7 @@ public class LibreTranslationService : ITranslationService
     }
 }
 
-namespace MyMealPlanner.Services.AI;
+
 
 /// <summary>
 /// Identifies food in uploaded photos using Google Cloud Vision API

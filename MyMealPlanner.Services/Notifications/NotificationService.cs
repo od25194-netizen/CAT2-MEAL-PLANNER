@@ -5,7 +5,6 @@ using MyMealPlanner.Core.Enums;
 using MyMealPlanner.Core.Interfaces;
 using MyMealPlanner.Core.Models;
 using MyMealPlanner.Infrastructure.Data;
-using MyMealPlanner.Web.Hubs;
 
 namespace MyMealPlanner.Services.Notifications;
 
@@ -16,7 +15,7 @@ namespace MyMealPlanner.Services.Notifications;
 public class NotificationService : INotificationService
 {
     private readonly ApplicationDbContext _db;
-    private readonly IHubContext<NotificationHub> _hub;
+    // private readonly IHubContext<NotificationHub> _hub;
     private readonly ILogger<NotificationService> _logger;
 
     private static readonly Dictionary<NotificationType, string> TypeIcons = new()
@@ -47,11 +46,11 @@ public class NotificationService : INotificationService
 
     public NotificationService(
         ApplicationDbContext db,
-        IHubContext<NotificationHub> hub,
+        // IHubContext<NotificationHub> hub,
         ILogger<NotificationService> logger)
     {
         _db     = db;
-        _hub    = hub;
+        // _hub    = hub;
         _logger = logger;
     }
 
@@ -79,6 +78,7 @@ public class NotificationService : INotificationService
         // Push via SignalR
         try
         {
+            /*
             await _hub.Clients.User(userId).SendAsync("NewNotification", new
             {
                 notification.Id,
@@ -89,6 +89,7 @@ public class NotificationService : INotificationService
                 notification.ActionUrl,
                 notification.CreatedAt
             });
+            */
         }
         catch (Exception ex)
         {

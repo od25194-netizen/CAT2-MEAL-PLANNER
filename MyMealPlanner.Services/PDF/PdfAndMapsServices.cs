@@ -268,7 +268,7 @@ public class PdfExportService
     }
 }
 
-namespace MyMealPlanner.Services.Maps;
+
 
 /// <summary>
 /// Finds restaurants, food markets, and grocery stores near the user

@@ -106,7 +106,7 @@ public class NutritionService : INutritionService
     }
 }
 
-namespace MyMealPlanner.Services.Social;
+
 
 /// <summary>
 /// Builds the personalised social feed — showing activity

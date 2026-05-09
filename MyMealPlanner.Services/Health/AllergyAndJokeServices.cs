@@ -74,7 +74,7 @@ public class AllergyService : IAllergyService
                 continue;
 
             var info = AllergenInfo.GetValueOrDefault(allergenType,
-                ("Reaction possible", "Consult doctor", "Seek medical advice", AllergenRisk.Low));
+                (Mild: "Reaction possible", Severe: "Consult doctor", First: "Seek medical advice", Risk: AllergenRisk.Low));
 
             // Direct match
             string? directMatch = ingredients.FirstOrDefault(ing =>
@@ -123,7 +123,7 @@ public class AllergyService : IAllergyService
     };
 }
 
-namespace MyMealPlanner.Services.Social;
+
 
 /// <summary>
 /// Manages cooking jokes — scraped daily from multiple sources
