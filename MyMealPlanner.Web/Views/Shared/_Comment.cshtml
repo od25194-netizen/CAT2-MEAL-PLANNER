@@ -1,0 +1,56 @@
+@* ═══ Shared/_Comment.cshtml ══════════════════════════════════════ *@
+@model MyMealPlanner.Core.Models.Comment
+
+<div class="d-flex gap-3 py-3 border-bottom" id="comment-@Model.Id">
+    <div class="avatar-sm flex-shrink-0" style="width:40px;height:40px;font-size:.9rem">
+        @if (!string.IsNullOrEmpty(Model.User?.ProfilePhotoUrl))
+        { <img src="@Model.User.ProfilePhotoUrl" style="width:100%;height:100%;object-fit:cover;border-radius:50%" /> }
+        else
+        { @(Model.User?.FullName?.FirstOrDefault() ?? '?') }
+    </div>
+    <div class="flex-grow-1">
+        <div class="d-flex align-items-baseline gap-2 flex-wrap">
+            <a asp-controller="Profile" asp-action="Index"
+               asp-route-userId="@Model.UserId"
+               class="fw-semibold text-dark small">@(Model.User?.FullName ?? "User")</a>
+            <span class="text-muted" style="font-size:.73rem">
+                @Model.CreatedAt.ToString("MMM d, yyyy · h:mm tt")
+                @(Model.IsEdited ? " (edited)" : "")
+            </span>
+        </div>
+
+        <p class="mb-2 mt-1">@Model.Body</p>
+
+        @if (!string.IsNullOrEmpty(Model.ImagesJson))
+        {
+            var images = System.Text.Json.JsonSerializer.Deserialize<List<string>>(Model.ImagesJson) ?? new();
+            <div class="d-flex gap-2 mb-2 flex-wrap">
+                @foreach (var img in images.Take(3))
+                {
+                    <img src="@img" style="width:80px;height:80px;object-fit:cover;border-radius:8px" />
+                }
+            </div>
+        }
+
+        <div class="d-flex gap-3 align-items-center">
+            <button class="btn btn-sm btn-link p-0 text-muted comment-like-btn"
+                    data-comment-id="@Model.Id" style="font-size:.82rem">
+                <i class="bi bi-heart"></i> <span>@Model.LikeCount</span>
+            </button>
+            <button class="btn btn-sm btn-link p-0 text-muted reply-btn"
+                    data-comment-id="@Model.Id" style="font-size:.82rem">
+                <i class="bi bi-reply"></i> Reply
+            </button>
+        </div>
+
+        @if (Model.Replies?.Any() == true)
+        {
+            <div class="ms-4 mt-2 border-start ps-3">
+                @foreach (var reply in Model.Replies.Take(5))
+                {
+                    <partial name="_Comment" model="reply" />
+                }
+            </div>
+        }
+    </div>
+</div>

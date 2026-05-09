@@ -1,0 +1,167 @@
+name: My Meal Planner — CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/mymealplanner
+
+jobs:
+  # ══════════════════════════════════════════════════════════════
+  # BUILD & TEST
+  # ══════════════════════════════════════════════════════════════
+  build-and-test:
+    runs-on: ubuntu-latest
+    name: Build & Test
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: Test@Password2024!
+          MSSQL_PID: Express
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Test@Password2024!' -Q 'SELECT 1'"
+          --health-interval 15s --health-timeout 10s --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore MyMealPlanner.sln
+
+      - name: Build
+        run: dotnet build MyMealPlanner.sln --no-restore -c Release
+
+      - name: Run unit tests
+        run: >
+          dotnet test MyMealPlanner.Tests/MyMealPlanner.Tests.csproj
+          --no-build --configuration Release
+          --logger "trx;LogFileName=test-results.trx"
+          --collect:"XPlat Code Coverage"
+        env:
+          ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=MyMealPlannerTest;User=sa;Password=Test@Password2024!;TrustServerCertificate=True"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: '**/test-results.trx'
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # ══════════════════════════════════════════════════════════════
+  # DOCKER BUILD & PUSH
+  # ══════════════════════════════════════════════════════════════
+  docker-build:
+    runs-on: ubuntu-latest
+    name: Docker Build & Push
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ══════════════════════════════════════════════════════════════
+  # DEPLOY (Railway / Render / Azure)
+  # ══════════════════════════════════════════════════════════════
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    needs: docker-build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: ${{ vars.APP_URL }}
+
+    steps:
+      - name: Deploy to Railway
+        if: vars.DEPLOY_TARGET == 'railway'
+        run: |
+          npm install -g @railway/cli
+          railway up --service mymealplanner
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Deploy to Render
+        if: vars.DEPLOY_TARGET == 'render'
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+      - name: Deploy to Azure App Service
+        if: vars.DEPLOY_TARGET == 'azure'
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: mymealplanner
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Run DB migrations in production
+        run: |
+          echo "Migrations run automatically on app startup via Program.cs"
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ Deployment successful to ${{ vars.APP_URL }}"

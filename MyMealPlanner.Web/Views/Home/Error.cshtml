@@ -1,0 +1,22 @@
+@* ══ Home/Error.cshtml ══════════════════════════════════════════ *@
+@{ ViewData["Title"] = "Something went wrong"; }
+
+<div class="container py-5 text-center" style="max-width:560px">
+    <div style="font-size:5rem">🍳</div>
+    <h1 class="display-font mt-3" style="font-size:2.5rem">Oops — the kitchen's on fire!</h1>
+    <p class="text-muted mt-2 mb-5" style="font-size:1.1rem">
+        Something went wrong on our end. Our chef is working on it.
+        Try refreshing the page or go back home.
+    </p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-orange btn-lg px-4">
+            <i class="bi bi-house-fill me-2"></i>Go Home
+        </a>
+        <button onclick="history.back()" class="btn btn-outline-orange btn-lg px-4">
+            <i class="bi bi-arrow-left me-2"></i>Go Back
+        </button>
+    </div>
+    <p class="text-muted small mt-4">
+        If this keeps happening, <a asp-controller="Home" asp-action="Contact" class="text-orange">contact support</a>.
+    </p>
+</div>

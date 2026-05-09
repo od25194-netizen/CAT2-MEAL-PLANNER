@@ -1,0 +1,91 @@
+@* ══ Admin/Users.cshtml ══════════════════════════════════════════ *@
+@model List<MyMealPlanner.Core.Models.ApplicationUser>
+@using MyMealPlanner.Core.Enums
+@{ ViewData["Title"] = "User Management"; }
+
+<div class="container-xl py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h1 class="display-font mb-0">👥 User Management</h1>
+        <form method="get" class="d-flex gap-2">
+            <input name="q" type="text" class="form-control form-control-sm"
+                   value="@ViewBag.Query" placeholder="Search name or email…" style="width:220px" />
+            <button type="submit" class="btn btn-orange btn-sm">Search</button>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-3 shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead style="background:var(--orange);color:white">
+                    <tr>
+                        <th class="py-3 px-4">User</th>
+                        <th>Country</th>
+                        <th>Level</th>
+                        <th>Joined</th>
+                        <th>Last Active</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td class="px-4 py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar-sm" style="width:36px;height:36px;font-size:.85rem">
+                                        @user.FullName.FirstOrDefault()
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold small">@user.FullName</div>
+                                        <div class="text-muted" style="font-size:.75rem">@user.Email</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="small">@(user.CountryCode ?? "—")</td>
+                            <td>
+                                <span class="tag @(user.ChefLevel >= ChefLevel.Level6_ExpertCulinarian ? "tag-green" : "tag-country")"
+                                      style="font-size:.72rem">
+                                    @((int)user.ChefLevel)
+                                    @(user.VerificationTick == VerificationTick.Gold ? "🌟" :
+                                      user.VerificationTick == VerificationTick.Green ? "🟢" :
+                                      user.VerificationTick == VerificationTick.White ? "⚪" : "")
+                                </span>
+                            </td>
+                            <td class="small text-muted">@user.CreatedAt.ToString("MMM d, yyyy")</td>
+                            <td class="small text-muted">
+                                @(user.LastActiveAt.HasValue ? user.LastActiveAt.Value.ToString("MMM d") : "Never")
+                            </td>
+                            <td>
+                                <span class="tag @(user.IsDeleted ? "tag-red" : "tag-green")" style="font-size:.72rem">
+                                    @(user.IsDeleted ? "Deleted" : "Active")
+                                </span>
+                            </td>
+                            <td>
+                                <a asp-controller="Profile" asp-action="Index"
+                                   asp-route-userId="@user.Id"
+                                   class="btn btn-sm btn-outline-orange">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    @{
+        int totalPages  = (int)(ViewBag.TotalPages ?? 1);
+        int currentPage = (int)(ViewBag.CurrentPage ?? 1);
+    }
+    @if (totalPages > 1)
+    {
+        <div class="d-flex justify-content-center gap-1 mt-4">
+            @for (int p = 1; p <= totalPages; p++)
+            {
+                <a asp-action="Users" asp-route-page="@p" asp-route-q="@ViewBag.Query"
+                   class="btn btn-sm @(p == currentPage ? "btn-orange" : "btn-outline-orange")">@p</a>
+            }
+        </div>
+    }
+</div>

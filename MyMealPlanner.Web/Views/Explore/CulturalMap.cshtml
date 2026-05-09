@@ -1,0 +1,93 @@
+@* ══ Explore/CulturalMap.cshtml ══════════════════════════════════ *@
+@{ ViewData["Title"] = "World Food Map"; }
+
+<div class="container-xl py-4">
+    <h1 class="display-font mb-1">🗺️ World Food Map</h1>
+    <p class="text-muted mb-5">
+        Explore cuisines by clicking a continent below.
+        Every culture has a food story — discover yours.
+    </p>
+
+    <!-- Interactive Continent Grid (CSS map alternative — zero dependencies) -->
+    <div class="row g-4 mb-5">
+        @{
+            var continents = new[] {
+                ("Africa",      "🌍", "var(--orange)",  "#E8630A",
+                 new[] { "Nigeria","Ghana","Kenya","Ethiopia","Morocco","Egypt","South Africa","Senegal","Tanzania" },
+                 "Home to over 2,000 distinct cuisines. Jollof rice, injera, bobotie, tagine, and suya are icons."),
+                ("Asia",        "🌏", "#2563EB",        "#2563EB",
+                 new[] { "Japan","China","India","Thailand","Vietnam","Korea","Indonesia","Malaysia","Pakistan" },
+                 "The world's most diverse culinary continent. Sushi, biryani, pad thai, ramen, dim sum, and more."),
+                ("Europe",      "🏰", "#22A86B",        "#22A86B",
+                 new[] { "Italy","France","Spain","Greece","Germany","UK","Poland","Portugal","Sweden" },
+                 "From Mediterranean simplicity to hearty Eastern European stews. Pizza, paella, croissants."),
+                ("Americas",    "🌎", "#E84646",        "#E84646",
+                 new[] { "Mexico","Brazil","USA","Peru","Argentina","Colombia","Jamaica","Canada","Cuba" },
+                 "Tacos, feijoada, BBQ, ceviche, empanadas. Indigenous techniques meet colonial fusion."),
+                ("Middle East", "🕌", "#9333EA",        "#9333EA",
+                 new[] { "Lebanon","Turkey","Iran","Saudi Arabia","UAE","Israel","Egypt","Jordan","Iraq" },
+                 "Hummus, falafel, shawarma, kebab, khoresh. Ancient spice routes shaped these flavours."),
+                ("Oceania",     "🦘", "#F5A623",        "#F5A623",
+                 new[] { "Australia","New Zealand","Fiji","Papua New Guinea","Samoa","Tonga" },
+                 "Indigenous bush tucker, Pacific island seafood, and modern fusion from multicultural cities."),
+            };
+        }
+        @foreach (var (continent, emoji, bg, border, countries, description) in continents)
+        {
+            <div class="col-12 col-md-6 col-lg-4 fade-up">
+                <div class="bg-white rounded-3 shadow-sm h-100 overflow-hidden"
+                     style="border-top:4px solid @border">
+                    <!-- Header -->
+                    <div class="p-4" style="background:linear-gradient(135deg,@bg15,var(--white))">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <span style="font-size:2.5rem">@emoji</span>
+                            <div>
+                                <h4 class="fw-bold mb-0" style="color:@border">@continent</h4>
+                                <div class="small text-muted">@countries.Length countries covered</div>
+                            </div>
+                        </div>
+                        <p class="small text-muted mb-0">@description</p>
+                    </div>
+
+                    <!-- Country pills -->
+                    <div class="p-3 border-top d-flex flex-wrap gap-1">
+                        @foreach (var country in countries)
+                        {
+                            <a asp-controller="Recipe" asp-action="Index"
+                               asp-route-country="@country"
+                               class="tag tag-country text-decoration-none"
+                               style="font-size:.75rem">@country</a>
+                        }
+                    </div>
+
+                    <div class="p-3 border-top">
+                        <a asp-controller="Recipe" asp-action="Index"
+                           asp-route-continent="@continent"
+                           class="btn btn-outline-orange btn-sm w-100">
+                            Explore @continent Cuisine →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Stat Row -->
+    <div class="bg-white rounded-3 shadow-sm p-4 text-center">
+        <div class="row g-4">
+            @{
+                var continentStats = ViewBag.ContinentData as IEnumerable<dynamic>;
+            }
+            @if (continentStats != null)
+            {
+                @foreach (var stat in continentStats)
+                {
+                    <div class="col-4 col-md-2">
+                        <div class="fw-bold fs-4 text-orange">@stat.Count</div>
+                        <div class="small text-muted">@stat.Continent</div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

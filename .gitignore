@@ -1,0 +1,51 @@
+# Build outputs
+bin/
+obj/
+*.user
+.vs/
+.vscode/
+
+# Logs
+logs/
+*.log
+
+# User secrets
+**/secrets.json
+appsettings.Development.json
+appsettings.Production.json
+.env
+.env.local
+.env.*.local
+
+# Database
+*.mdf
+*.ldf
+*.ndf
+
+# Docker
+.dockerignore
+
+# Packages
+node_modules/
+*.nupkg
+
+# Test results
+TestResults/
+coverage/
+*.trx
+*.coveragexml
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# Temporary
+*.tmp
+*.bak
+*.swp
+~$*

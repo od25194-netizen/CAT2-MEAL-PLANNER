@@ -1,0 +1,47 @@
+@* ══ Account/TwoFactorRecoveryCodes.cshtml ══════════════════════ *@
+@model List<string>
+@{ ViewData["Title"] = "Recovery Codes"; }
+
+<div class="container py-5" style="max-width:520px">
+    <div class="text-center mb-4">
+        <div style="font-size:3rem">🗝️</div>
+        <h1 class="display-font" style="font-size:1.8rem">Save Your Recovery Codes</h1>
+        <p class="text-muted">
+            Store these codes somewhere safe. Each code can only be used <strong>once</strong>
+            to log in if you lose access to your authenticator.
+        </p>
+    </div>
+    <div class="alert alert-danger d-flex gap-2 mb-4">
+        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+        <span>These codes will not be shown again. Save them now before leaving this page.</span>
+    </div>
+    <div class="bg-white rounded-3 p-4 shadow-sm mb-4">
+        <div class="row g-2">
+            @foreach (var code in Model)
+            {
+                <div class="col-6">
+                    <code class="d-block p-2 text-center rounded"
+                          style="background:var(--light-2);font-size:.95rem;letter-spacing:.05em">
+                        @code
+                    </code>
+                </div>
+            }
+        </div>
+        <hr />
+        <button onclick="copyAllCodes()"
+                class="btn btn-outline-orange w-100 btn-sm">
+            <i class="bi bi-clipboard"></i> Copy All Codes
+        </button>
+    </div>
+    <a asp-action="Settings" class="btn btn-orange w-100">Done — Go to Settings</a>
+</div>
+
+@section Scripts {
+<script>
+function copyAllCodes() {
+    const codes = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model));
+    navigator.clipboard.writeText(codes.join('\n'));
+    showToast?.('Recovery codes copied! 🗝️');
+}
+</script>
+}

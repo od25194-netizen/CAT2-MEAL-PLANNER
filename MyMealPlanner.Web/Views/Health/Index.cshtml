@@ -1,0 +1,98 @@
+@* ══ Health/Index.cshtml — Eat Healthy Hub ══════════════════════ *@
+@{ ViewData["Title"] = "Eat Healthy Hub"; }
+
+<div class="container-xl py-4">
+    <!-- Hero Banner -->
+    <div class="rounded-3 mb-5 p-5 text-white"
+         style="background:linear-gradient(135deg,#0F2027,#203A43,#2C5364)">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <div class="tag tag-green mb-3">💚 Eat Healthy</div>
+                <h1 class="display-font text-white mb-3" style="font-size:2.5rem">
+                    Food is Medicine.<br />Eat with Purpose.
+                </h1>
+                <p class="text-white-50 mb-4">
+                    Everything you need to eat smarter — nutrients, allergies, timing,
+                    healing foods, workout nutrition, and healthy recipes from every culture.
+                </p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a asp-action="Nutrients" class="btn btn-orange">Nutrient Navigator</a>
+                    <a asp-action="Allergies" class="btn btn-outline-orange" style="color:white;border-color:white">Allergy Guide</a>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block text-center">
+                <div style="font-size:7rem">🥗</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Feature Cards -->
+    <div class="row g-4">
+        @{
+            var cards = new[] {
+                ("🟠","Nutrient Navigator",    "Nutrients",    "Click any nutrient to see every food that contains it — from Vitamin C to Omega-3",           "Explore nutrients"),
+                ("🛡️","Allergy Safety Guide",  "Allergies",    "Know your allergens, detect hidden sources, and find safe substitutes before you cook",        "Check allergens"),
+                ("💊","Food as Medicine",       "FoodAsMedicine","10 health conditions and the foods that heal them — from headaches to heart health",             "Heal with food"),
+                ("⏰","When To Eat",            "WhenToEat",    "Optimise meal timing for energy, digestion, weight, and sleep across 9 daily windows",          "Learn timing"),
+                ("⚡","Workout Nutrition",      "Workout",      "Pre and post-workout meals for every training type — fuel right, recover faster",               "Workout meals"),
+                ("⚖️","Obesity Fighter",        "ObesityFighter","Low-calorie, high-satiety recipes from cultures that eat well and live long",                   "Browse recipes"),
+                ("👶","Eat by Age Bracket",     "AgePlan",      "What people should eat from infancy to elderly — personalised nutritional guidance by age",      "My age plan"),
+                ("🐾","Pet Cuisine",            "Pets",         "Homemade pet meal recipes, toxic food warnings, and nutritional guides for your furry family",   "Pet meals"),
+            };
+        }
+        @foreach (var (emoji, title, action, desc, cta) in cards)
+        {
+            <div class="col-6 col-md-4 col-lg-3 fade-up">
+                <div class="h-100 bg-white rounded-3 shadow-sm p-4 d-flex flex-column"
+                     style="border-top:3px solid var(--orange);transition:.2s"
+                     onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow)'"
+                     onmouseout="this.style.transform='';this.style.boxShadow='var(--shadow-sm)'">
+                    <div style="font-size:2.5rem">@emoji</div>
+                    <h5 class="fw-bold mt-3 mb-2">@title</h5>
+                    <p class="text-muted small flex-grow-1">@desc</p>
+                    <a asp-action="@action" class="btn btn-outline-orange btn-sm mt-2">@cta →</a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Balanced Plate Visual -->
+    <div class="row align-items-center g-4 mt-5 p-4 bg-white rounded-3 shadow-sm">
+        <div class="col-md-4 text-center">
+            <div style="width:200px;height:200px;border-radius:50%;margin:0 auto;
+                        background:conic-gradient(#22A86B 0deg 126deg, #F5A623 126deg 216deg,
+                        #E84646 216deg 306deg, #2563EB 306deg 342deg, #E8630A 342deg 360deg);
+                        box-shadow:0 8px 32px rgba(0,0,0,.15)">
+            </div>
+        </div>
+        <div class="col-md-8">
+            <h3 class="display-font mb-3">The Balanced Plate</h3>
+            <div class="d-flex flex-column gap-2">
+                @{
+                    var plate = new[] {
+                        ("#22A86B","35%","🥦 Vegetables","Broccoli, spinach, peppers, carrots"),
+                        ("#F5A623","25%","🌾 Whole Grains","Brown rice, oats, quinoa, wholegrain bread"),
+                        ("#E84646","25%","🍗 Protein","Chicken, fish, legumes, eggs, tofu"),
+                        ("#2563EB","10%","🍓 Fruit","Berries, oranges, banana, mango"),
+                        ("#E8630A","5%","🥛 Dairy / Alt","Milk, yoghurt, almond milk, kefir"),
+                    };
+                }
+                @foreach (var (color, pct, label, examples) in plate)
+                {
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width:14px;height:14px;background:@color;border-radius:3px;flex-shrink:0"></div>
+                        <div style="width:45px;font-weight:700;font-size:.85rem;color:@color">@pct</div>
+                        <div class="flex-grow-1">
+                            <span class="fw-semibold small">@label</span>
+                            <span class="text-muted small"> — @examples</span>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="mt-3 p-3 rounded-2" style="background:var(--light-2)">
+                <i class="bi bi-droplet-fill text-info"></i>
+                <strong>+ Hydration:</strong> <span class="text-muted">8 glasses of water daily (2L minimum)</span>
+            </div>
+        </div>
+    </div>
+</div>

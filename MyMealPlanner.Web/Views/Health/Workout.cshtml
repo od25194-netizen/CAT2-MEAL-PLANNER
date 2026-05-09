@@ -1,0 +1,102 @@
+@* ══ Health/Workout.cshtml ══════════════════════════════════════ *@
+@{ ViewData["Title"] = "Workout Nutrition"; }
+
+<div class="container-xl py-4">
+    <h1 class="section-heading">⚡ Workout Nutrition</h1>
+    <p class="text-muted mb-5">
+        Fuel the right way before and after every workout. What you eat around exercise
+        determines your energy, performance, and recovery.
+    </p>
+
+    <!-- Pre/Post Grid -->
+    <div class="row g-4 mb-5">
+        @{
+            var workoutMeals = new[] {
+                ("🏃","Cardio / Running",
+                 "Banana + peanut butter, Oats + honey, Rice cakes",
+                 "Protein shake + banana, Chicken rice bowl, Greek yoghurt + berries",
+                 "Eat 1–2 hours before. Light carbs for quick energy."),
+                ("🏋️","Weight Training",
+                 "Oats + eggs, Brown rice + chicken, Wholegrain toast + nut butter",
+                 "Chicken + sweet potato, Tuna rice bowl, Protein shake + oats",
+                 "Higher protein pre and post. Eat within 45 mins after."),
+                ("🧘","Yoga / Pilates",
+                 "Light fruit + nuts, Green smoothie, Small yoghurt",
+                 "Greek yoghurt + honey, Avocado on toast, Light salad + egg",
+                 "Avoid heavy meals. Light digestion supports flexibility."),
+                ("🔥","HIIT",
+                 "Banana, Rice cakes, Small handful of dates",
+                 "Protein shake + fruit, Eggs + wholegrain, Smoothie bowl",
+                 "Keep pre-workout very light — HIIT with a full stomach is uncomfortable."),
+                ("🏊","Swimming",
+                 "Toast + eggs, Porridge + berries, Banana + almond butter",
+                 "Tuna + sweet potato, Greek yoghurt, Rice + salmon",
+                 "Good pre-workout carbs. Replenish well post-swim."),
+                ("🚴","Cycling",
+                 "Pasta + olive oil, Rice + vegetables, Energy bar (natural)",
+                 "Recovery shake, Jacket potato + tuna, Quinoa + veg",
+                 "Longer rides need carb-loading. Eat every 45–60 mins on the bike."),
+            };
+        }
+        @foreach (var (emoji, type, pre, post, tip) in workoutMeals)
+        {
+            <div class="col-md-6 col-lg-4 fade-up">
+                <div class="bg-white rounded-3 shadow-sm p-4 h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span style="font-size:1.8rem">@emoji</span>
+                        <h5 class="fw-bold mb-0">@type</h5>
+                    </div>
+                    <div class="mb-3">
+                        <div class="tag tag-orange mb-2">⚡ Pre-Workout (1–2hrs before)</div>
+                        <p class="small mb-0">@pre</p>
+                    </div>
+                    <div class="mb-3">
+                        <div class="tag tag-green mb-2">💪 Post-Workout (within 45 min)</div>
+                        <p class="small mb-0">@post</p>
+                    </div>
+                    <div class="small p-2 rounded-2" style="background:var(--light-2)">
+                        💡 @tip
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Muscle Group Nutrition -->
+    <div class="bg-white rounded-3 shadow-sm p-4 mb-5">
+        <h3 class="display-font mb-4">🎯 Eat for Your Training Day</h3>
+        <div class="row g-3">
+            @{
+                var dayTypes = new[] {
+                    ("🔥 High Intensity / Leg Day", "Carb-heavy: pasta, rice, sweet potato + protein (chicken, eggs)", "You need maximum glycogen stores.", "#E84646"),
+                    ("💪 Upper Body / Strength",    "Protein-focused: chicken, fish, eggs, legumes + moderate carbs",   "Muscles need amino acids to rebuild.",  "#2563EB"),
+                    ("🧘 Rest Day / Recovery",       "Anti-inflammatory: salmon, berries, turmeric, leafy greens",       "Reduce inflammation. Repair tissue.",   "#22A86B"),
+                    ("🏃 Long Run / Cardio Day",     "Carb-load the day before. During: banana, gels. After: protein",   "Sustain energy over long distances.",   "#F5A623"),
+                };
+            }
+            @foreach (var (label, foods, reason, color) in dayTypes)
+            {
+                <div class="col-md-6">
+                    <div class="p-3 rounded-3 h-100"
+                         style="border-left:4px solid @color;background:var(--light-2)">
+                        <div class="fw-bold mb-1" style="color:@color">@label</div>
+                        <div class="small mb-1">@foods</div>
+                        <div class="small text-muted">@reason</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Link to workout recipes -->
+    <div class="text-center">
+        <h4 class="display-font mb-3">Find High-Protein Recipes 🍗</h4>
+        <div class="d-flex gap-2 justify-content-center flex-wrap">
+            @foreach (var tag in new[] { "High Protein","Pre-Workout","Post-Workout","Low Calorie","Recovery Meal","Energy Boost" })
+            {
+                <a asp-controller="Recipe" asp-action="Index" asp-route-q="@tag"
+                   class="search-pill">@tag</a>
+            }
+        </div>
+    </div>
+</div>

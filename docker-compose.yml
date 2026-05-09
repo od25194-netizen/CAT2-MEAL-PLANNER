@@ -1,0 +1,96 @@
+version: '3.9'
+
+services:
+
+  # ── ASP.NET Core App ────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=MyMealPlannerDb;User=sa;Password=MyMealPlanner@2024!;TrustServerCertificate=True
+      - ConnectionStrings__Redis=redis:6379
+      - Auth__Google__ClientId=${GOOGLE_CLIENT_ID}
+      - Auth__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
+      - Auth__Facebook__AppId=${FACEBOOK_APP_ID}
+      - Auth__Facebook__AppSecret=${FACEBOOK_APP_SECRET}
+      - YouTube__ApiKey=${YOUTUBE_API_KEY}
+      - AI__GroqApiKey=${GROQ_API_KEY}
+      - Email__SmtpHost=smtp.gmail.com
+      - Email__SmtpPort=587
+      - Email__Username=${EMAIL_USERNAME}
+      - Email__Password=${EMAIL_PASSWORD}
+      - Email__FromName=My Meal Planner
+      - GoogleMaps__ApiKey=${GOOGLE_MAPS_KEY}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - mmp-net
+
+  # ── SQL Server ───────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=MyMealPlanner@2024!
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'MyMealPlanner@2024!' -Q 'SELECT 1' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - mmp-net
+
+  # ── Redis Cache ───────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - mmp-net
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  # ── LibreTranslate (Free translation API) ────────────────────
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    ports:
+      - "5001:5000"
+    environment:
+      - LT_LOAD_ONLY=en,fr,es,pt,ar,zh,hi,de,it,ja,ko,sw
+      - LT_DISABLE_WEB_UI=false
+    volumes:
+      - libretranslate-data:/home/libretranslate/.local
+    restart: unless-stopped
+    networks:
+      - mmp-net
+
+volumes:
+  sqlserver-data:
+  redis-data:
+  libretranslate-data:
+
+networks:
+  mmp-net:
+    driver: bridge

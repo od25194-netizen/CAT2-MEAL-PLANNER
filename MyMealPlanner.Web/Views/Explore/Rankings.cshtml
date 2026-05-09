@@ -1,0 +1,114 @@
+@* ══ Explore/Rankings.cshtml ═════════════════════════════════════ *@
+@using MyMealPlanner.Core.Enums
+@model List<MyMealPlanner.Core.Models.DishRanking>
+@{
+    ViewData["Title"] = "Global Food Rankings";
+    var scope       = (RankingScope)(ViewBag.Scope ?? RankingScope.Global);
+    var scopeValue  = ViewBag.ScopeValue as string;
+    int currentPage = (int)(ViewBag.Page ?? 1);
+    int totalPages  = (int)(ViewBag.TotalPages ?? 1);
+}
+
+<div class="container-xl py-4">
+    <h1 class="display-font mb-1">🏆 Food Rankings</h1>
+    <p class="text-muted mb-4">The most loved dishes on the planet, updated every 3 hours.</p>
+
+    <!-- Scope Tabs -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        @{
+            var scopes = new[] {
+                (RankingScope.Global,    null,           "🌐 Global"),
+                (RankingScope.Weekly,    null,           "🔥 This Week"),
+                (RankingScope.Continent, "Africa",       "🌍 Africa"),
+                (RankingScope.Continent, "Asia",         "🌏 Asia"),
+                (RankingScope.Continent, "Europe",       "🇪🇺 Europe"),
+                (RankingScope.Continent, "Americas",     "🌎 Americas"),
+                (RankingScope.Continent, "Oceania",      "🦘 Oceania"),
+                (RankingScope.Continent, "Middle East",  "🕌 Middle East"),
+            };
+        }
+        @foreach (var (s, sv, label) in scopes)
+        {
+            var active = s == scope && sv == scopeValue;
+            <a asp-action="Rankings" asp-route-scope="@s" asp-route-scopeValue="@sv"
+               class="tag @(active ? "tag-orange" : "tag-country")"
+               style="font-size:.85rem;padding:.4rem .9rem;cursor:pointer">
+                @label
+            </a>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-hourglass-split fs-1 d-block mb-3"></i>
+            <p>Rankings are being calculated. Check back in a few minutes.</p>
+        </div>
+    }
+    else
+    {
+        <div class="bg-white rounded-3 shadow-sm overflow-hidden mb-4">
+            @foreach (var ranking in Model)
+            {
+                var recipe = ranking.Recipe;
+                <div class="ranking-row border-bottom" style="padding:1rem 1.25rem">
+                    <!-- Position -->
+                    <div class="rank-badge rank-@(ranking.RankPosition <= 3 ? ranking.RankPosition.ToString() : "n")"
+                         style="width:44px;height:44px;font-size:1rem;flex-shrink:0">
+                        @ranking.RankPosition
+                    </div>
+
+                    <!-- Recipe Image -->
+                    @if (!string.IsNullOrEmpty(recipe?.CoverImageUrl))
+                    {
+                        <img src="@recipe.CoverImageUrl" alt=""
+                             style="width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0" />
+                    }
+
+                    <!-- Info -->
+                    <div class="flex-grow-1">
+                        <a asp-controller="Recipe" asp-action="Details"
+                           asp-route-id="@recipe?.Id" asp-route-slug="@recipe?.Slug"
+                           class="fw-semibold text-dark d-block mb-1"
+                           style="font-family:var(--font-display);font-size:1.05rem">
+                            @recipe?.Title
+                        </a>
+                        <div class="d-flex flex-wrap gap-2">
+                            @if (!string.IsNullOrEmpty(recipe?.OriginCountry))
+                            { <span class="tag tag-country" style="font-size:.72rem">🌍 @recipe.OriginCountry</span> }
+                            @if (!string.IsNullOrEmpty(recipe?.CultureTag))
+                            { <span class="tag tag-blue" style="font-size:.72rem">@recipe.CultureTag</span> }
+                            @if (recipe != null)
+                            { <span class="tag tag-orange" style="font-size:.72rem">@recipe.MealType</span> }
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="text-end flex-shrink-0">
+                        <div class="fw-bold">@recipe?.LikeCount.ToString("N0") ❤️</div>
+                        <div class="small text-muted">@recipe?.ViewCount.ToString("N0") views</div>
+                        @if (ranking.WeeklyTrend > 0)
+                        { <div class="rank-trend-up small"><i class="bi bi-arrow-up"></i> @ranking.WeeklyTrend</div> }
+                        else if (ranking.WeeklyTrend < 0)
+                        { <div class="rank-trend-down small"><i class="bi bi-arrow-down"></i> @Math.Abs(ranking.WeeklyTrend)</div> }
+                        else
+                        { <div class="rank-trend-same small"><i class="bi bi-dash"></i></div> }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <div class="d-flex justify-content-center gap-1 flex-wrap">
+                @for (int p = 1; p <= totalPages; p++)
+                {
+                    <a asp-action="Rankings" asp-route-scope="@scope"
+                       asp-route-scopeValue="@scopeValue" asp-route-page="@p"
+                       class="btn btn-sm @(p == currentPage ? "btn-orange" : "btn-outline-orange")">@p</a>
+                }
+            </div>
+        }
+    }
+</div>

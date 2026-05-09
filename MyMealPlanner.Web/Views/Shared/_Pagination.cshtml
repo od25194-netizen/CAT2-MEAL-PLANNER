@@ -1,0 +1,57 @@
+@* ══ Shared/_Pagination.cshtml ══════════════════════════════════ *@
+@{
+    int currentPage = (int)(ViewBag.CurrentPage ?? 1);
+    int totalPages  = (int)(ViewBag.TotalPages  ?? 1);
+    string action   = (string)(ViewBag.PaginationAction ?? "Index");
+    string ctrl     = (string)(ViewBag.PaginationController ?? ViewContext.RouteData.Values["controller"]?.ToString() ?? "Home");
+}
+
+@if (totalPages > 1)
+{
+    <div class="d-flex justify-content-center align-items-center gap-1 my-4 flex-wrap">
+        @if (currentPage > 1)
+        {
+            <a asp-controller="@ctrl" asp-action="@action" asp-route-page="@(currentPage - 1)"
+               class="btn btn-outline-orange btn-sm px-3">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        }
+
+        @{
+            int start = Math.Max(1, currentPage - 2);
+            int end   = Math.Min(totalPages, currentPage + 2);
+        }
+
+        @if (start > 1)
+        {
+            <a asp-controller="@ctrl" asp-action="@action" asp-route-page="1"
+               class="btn btn-outline-orange btn-sm">1</a>
+            @if (start > 2) { <span class="text-muted px-1">…</span> }
+        }
+
+        @for (int p = start; p <= end; p++)
+        {
+            <a asp-controller="@ctrl" asp-action="@action" asp-route-page="@p"
+               class="btn btn-sm @(p == currentPage ? "btn-orange" : "btn-outline-orange")">@p</a>
+        }
+
+        @if (end < totalPages)
+        {
+            @if (end < totalPages - 1) { <span class="text-muted px-1">…</span> }
+            <a asp-controller="@ctrl" asp-action="@action" asp-route-page="@totalPages"
+               class="btn btn-outline-orange btn-sm">@totalPages</a>
+        }
+
+        @if (currentPage < totalPages)
+        {
+            <a asp-controller="@ctrl" asp-action="@action" asp-route-page="@(currentPage + 1)"
+               class="btn btn-outline-orange btn-sm px-3">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        }
+
+        <div class="text-muted small ms-2">
+            Page @currentPage of @totalPages
+        </div>
+    </div>
+}

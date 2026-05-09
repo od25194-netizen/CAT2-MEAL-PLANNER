@@ -1,0 +1,57 @@
+{
+  "name": "My Meal Planner",
+  "short_name": "MealPlanner",
+  "description": "Discover recipes from every culture. Plan meals. Eat with purpose.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8F4EF",
+  "theme_color": "#E8630A",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "categories": ["food", "health", "lifestyle"],
+  "icons": [
+    {
+      "src": "/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/screenshot-home.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "Homepage — discover global recipes"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Recipes",
+      "short_name": "Recipes",
+      "description": "Browse recipes from around the world",
+      "url": "/Recipe",
+      "icons": [{ "src": "/images/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Meal Plan",
+      "short_name": "Plan",
+      "description": "View your weekly meal plan",
+      "url": "/MealPlan",
+      "icons": [{ "src": "/images/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Health Hub",
+      "short_name": "Health",
+      "description": "Nutrient guide and allergy information",
+      "url": "/Health",
+      "icons": [{ "src": "/images/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

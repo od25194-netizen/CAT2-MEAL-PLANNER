@@ -1,0 +1,107 @@
+@* ═══ Health/WhenToEat.cshtml ════════════════════════════════════ *@
+@using MyMealPlanner.Core.Enums
+@model List<MyMealPlanner.Core.Models.FoodTimingGuide>
+@{ ViewData["Title"] = "When To Eat"; }
+
+<div class="container-xl py-4">
+    <h1 class="section-heading">⏰ When To Eat</h1>
+    <p class="text-muted mb-5">
+        The timing of your meals matters as much as what you eat.
+        Eat in harmony with your body's natural rhythms for peak energy, better digestion, and improved health.
+    </p>
+
+    <!-- Timeline -->
+    <div class="position-relative">
+        <!-- Vertical line -->
+        <div class="d-none d-md-block position-absolute"
+             style="left:50%;top:0;bottom:0;width:2px;background:var(--orange);transform:translateX(-50%);z-index:0"></div>
+
+        @{
+            var icons = new Dictionary<MealTimingType, string> {
+                [MealTimingType.WakeUp]         = "🌅",
+                [MealTimingType.Breakfast]       = "☕",
+                [MealTimingType.MidMorning]      = "🍎",
+                [MealTimingType.Lunch]           = "🍛",
+                [MealTimingType.AfternoonSnack]  = "🌿",
+                [MealTimingType.Dinner]          = "🌆",
+                [MealTimingType.BeforeBed]       = "🌙",
+                [MealTimingType.PreWorkout]      = "⚡",
+                [MealTimingType.PostWorkout]     = "💪",
+            };
+            bool left = true;
+        }
+
+        @foreach (var guide in Model)
+        {
+            var icon = icons.GetValueOrDefault(guide.TimingType, "🕐");
+            var bestFoods  = System.Text.Json.JsonSerializer.Deserialize<List<string>>(guide.BestFoodsJson)  ?? new();
+            var avoidFoods = System.Text.Json.JsonSerializer.Deserialize<List<string>>(guide.FoodsToAvoidJson) ?? new();
+            bool isWorkout = guide.TimingType is MealTimingType.PreWorkout or MealTimingType.PostWorkout;
+
+            <div class="row mb-4 align-items-center g-0 fade-up">
+                @if (left)
+                {
+                    <div class="col-md-5 text-md-end pe-md-4">
+                        <div class="bg-white rounded-3 shadow-sm p-4 d-inline-block w-100"
+                             style="@(isWorkout ? "border-top:3px solid var(--green)" : "border-top:3px solid var(--orange)")">
+                            <div class="d-flex align-items-center gap-2 justify-content-end mb-2">
+                                <span class="fw-bold">@guide.TimingType.ToString().Replace("_"," ")</span>
+                                <span class="tag tag-country">@guide.TimeRange</span>
+                            </div>
+                            <p class="small text-muted mb-2">@guide.Reason</p>
+                            <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                @foreach (var f in bestFoods.Take(4))
+                                { <span class="tag tag-green" style="font-size:.72rem">@f</span> }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 d-none d-md-flex justify-content-center align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center"
+                             style="width:52px;height:52px;background:var(--white);
+                                    border:3px solid var(--orange);z-index:1;font-size:1.5rem;
+                                    box-shadow:var(--shadow)">
+                            @icon
+                        </div>
+                    </div>
+                    <div class="col-md-5 ps-md-4 d-none d-md-block"></div>
+                }
+                else
+                {
+                    <div class="col-md-5 pe-md-4 d-none d-md-block"></div>
+                    <div class="col-md-2 d-none d-md-flex justify-content-center align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center"
+                             style="width:52px;height:52px;background:var(--white);
+                                    border:3px solid var(--orange);z-index:1;font-size:1.5rem;
+                                    box-shadow:var(--shadow)">
+                            @icon
+                        </div>
+                    </div>
+                    <div class="col-md-5 ps-md-4">
+                        <div class="bg-white rounded-3 shadow-sm p-4"
+                             style="@(isWorkout ? "border-top:3px solid var(--green)" : "border-top:3px solid var(--orange)")">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="fw-bold">@guide.TimingType.ToString().Replace("_"," ")</span>
+                                <span class="tag tag-country">@guide.TimeRange</span>
+                            </div>
+                            <p class="small text-muted mb-2">@guide.Reason</p>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var f in bestFoods.Take(4))
+                                { <span class="tag tag-green" style="font-size:.72rem">@f</span> }
+                            </div>
+                            @if (avoidFoods.Any())
+                            {
+                                <div class="mt-2 d-flex flex-wrap gap-1">
+                                    @foreach (var f in avoidFoods.Take(3))
+                                    { <span class="tag tag-red" style="font-size:.72rem">❌ @f</span> }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+            left = !left;
+        }
+    </div>
+</div>
+
+@* ═══ Health/Workout.cshtml ══════════════════════════════════════ *@

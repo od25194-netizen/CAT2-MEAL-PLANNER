@@ -1,0 +1,91 @@
+@* ══ Quiz/QuizResult.cshtml ══════════════════════════════════════ *@
+@model MyMealPlanner.Core.Models.QuizAttempt
+@using MyMealPlanner.Core.Enums
+@{ ViewData["Title"] = "Quiz Result"; }
+
+<div class="container py-5 text-center" style="max-width:560px">
+    @if (Model.LeveledUp)
+    {
+        <div style="font-size:5rem;animation:fadeUp .6s ease">🌟</div>
+        <h1 class="display-font mt-3" style="color:var(--orange)">Congratulations!</h1>
+        <p class="text-muted fs-5">You levelled up to <strong>@Model.TargetLevel.ToString().Replace("_"," ")</strong></p>
+
+        @if (Model.TargetLevel >= ChefLevel.Level4_ConfidentCook)
+        {
+            var tick = Model.TargetLevel switch {
+                ChefLevel.Level4_ConfidentCook or ChefLevel.Level5_SkilledChef => "⚪ White Tick",
+                ChefLevel.Level6_ExpertCulinarian or ChefLevel.Level7_MasterChef => "🟢 Green Tick",
+                ChefLevel.Level8_GrandChef => "🌟 Gold Tick",
+                _ => ""
+            };
+            <div class="tag tag-orange mb-4 mx-auto" style="display:inline-flex;font-size:1rem">
+                @tick unlocked!
+            </div>
+        }
+    }
+    else
+    {
+        <div style="font-size:5rem">@(Model.ScorePercent >= 70 ? "😊" : "😤")</div>
+        <h1 class="display-font mt-3">@(Model.ScorePercent >= 70 ? "Good effort!" : "Keep practising!")</h1>
+        <p class="text-muted">You didn't quite reach the pass mark this time.</p>
+    }
+
+    <!-- Score Card -->
+    <div class="bg-white rounded-3 shadow-sm p-4 my-4">
+        <div class="row g-3">
+            <div class="col-4 text-center">
+                <div class="fw-bold" style="font-size:2.5rem;color:var(--orange)">
+                    @Model.ScorePercent.ToString("F0")%
+                </div>
+                <div class="small text-muted">Score</div>
+            </div>
+            <div class="col-4 text-center border-start border-end">
+                <div class="fw-bold" style="font-size:2.5rem;color:var(--green)">
+                    @Model.CorrectAnswers
+                </div>
+                <div class="small text-muted">Correct</div>
+            </div>
+            <div class="col-4 text-center">
+                <div class="fw-bold" style="font-size:2.5rem;color:var(--mid)">
+                    @Model.TotalQuestions
+                </div>
+                <div class="small text-muted">Total</div>
+            </div>
+        </div>
+
+        <!-- Score bar -->
+        <div class="mt-4">
+            <div class="level-bar" style="height:12px">
+                <div class="level-bar-fill"
+                     style="width:@Model.ScorePercent%;background:@(Model.IsPassed ? "var(--green)" : "var(--orange)")"></div>
+            </div>
+            <div class="d-flex justify-content-between small text-muted mt-1">
+                <span>0%</span>
+                <span style="color:@(Model.IsPassed ? "var(--green)" : "var(--red)")">
+                    @(Model.IsPassed ? "✅ Passed" : "❌ Not passed")
+                </span>
+                <span>100%</span>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.IsPassed && Model.NextAttemptAllowedAt.HasValue)
+    {
+        <div class="p-3 rounded-3 mb-4" style="background:var(--light-2)">
+            <i class="bi bi-clock"></i>
+            Next attempt available: <strong>@Model.NextAttemptAllowedAt.Value.ToString("f")</strong>
+            <div class="small text-muted mt-1">
+                Use this time to explore more recipes and cook more dishes to improve your score.
+            </div>
+        </div>
+    }
+
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+        <a asp-controller="Quiz" asp-action="Index" class="btn btn-orange px-4">
+            <i class="bi bi-mortarboard me-2"></i>Back to Quiz Hub
+        </a>
+        <a asp-controller="Recipe" asp-action="Index" class="btn btn-outline-orange px-4">
+            <i class="bi bi-search me-2"></i>Explore Recipes
+        </a>
+    </div>
+</div>

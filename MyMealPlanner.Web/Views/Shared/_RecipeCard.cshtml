@@ -1,0 +1,54 @@
+@* ═══════════════════════════════════════════════════════════════
+   _RecipeCard.cshtml — Reusable recipe card partial
+   ═══════════════════════════════════════════════════════════════ *@
+@model MyMealPlanner.Core.Models.Recipe
+@if (Model == null) { return; }
+<div class="recipe-card h-100">
+    <a asp-controller="Recipe" asp-action="Details"
+       asp-route-id="@Model.Id" asp-route-slug="@Model.Slug"
+       class="text-decoration-none d-flex flex-column h-100">
+
+        @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+        {
+            <img src="@Model.CoverImageUrl" alt="@Model.Title"
+                 class="recipe-card-img" loading="lazy" />
+        }
+        else
+        {
+            <div class="recipe-card-img-placeholder">🍽️</div>
+        }
+
+        <div class="recipe-card-body">
+            <div class="recipe-card-title">@Model.Title</div>
+
+            @if (!string.IsNullOrEmpty(Model.CulturalStory))
+            {
+                <p class="small text-muted mb-2" style="-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">
+                    @Model.CulturalStory
+                </p>
+            }
+
+            <div class="recipe-card-meta">
+                @if (!string.IsNullOrEmpty(Model.OriginCountry))
+                {
+                    <span class="tag tag-country">🌍 @Model.OriginCountry</span>
+                }
+                <span class="tag tag-orange">
+                    <i class="bi bi-clock"></i>
+                    @(Model.PrepTimeMinutes + Model.CookTimeMinutes)m
+                </span>
+                @if (Model.DifficultyLevel <= MyMealPlanner.Core.Enums.DifficultyLevel.Easy)
+                {
+                    <span class="tag tag-green">@Model.DifficultyLevel</span>
+                }
+                <div class="ms-auto d-flex align-items-center gap-2 text-muted" style="font-size:.78rem">
+                    <span><i class="bi bi-heart"></i> @Model.LikeCount.ToString("N0")</span>
+                    @if (!string.IsNullOrEmpty(Model.YouTubeVideoId))
+                    {
+                        <span><i class="bi bi-play-circle text-danger"></i></span>
+                    }
+                </div>
+            </div>
+        </div>
+    </a>
+</div>

@@ -1,0 +1,29 @@
+@* ══ Home/Privacy.cshtml ════════════════════════════════════════ *@
+@{ ViewData["Title"] = "Privacy Policy"; }
+
+<div class="container py-5" style="max-width:760px">
+    <h1 class="display-font mb-1">🔒 Privacy Policy</h1>
+    <p class="text-muted mb-5">Last updated: @DateTime.UtcNow.ToString("MMMM d, yyyy")</p>
+
+    @{
+        var sections = new[] {
+            ("What We Collect", "We collect information you provide directly (name, email, food preferences, cooking history) and information generated through your use of the platform (recipes liked, meals cooked, quiz results)."),
+            ("How We Use It", "Your data powers personalised recipe recommendations, meal plan generation, chef level progression, and relevant notifications. We never sell your data to third parties."),
+            ("Data Storage", "All data is stored securely on encrypted servers. Sensitive fields (blood type, address) are encrypted at rest with AES-256. We use industry-standard security practices throughout."),
+            ("OAuth & Third Parties", "If you sign in via Google or Facebook, we receive your name, email, and profile photo. We do not access your social media contacts or post on your behalf."),
+            ("Cookies", "We use essential cookies for authentication and session management, and optional analytics cookies to understand how the platform is used. You can manage these in your browser settings."),
+            ("Your Rights (GDPR)", "If you are an EU resident, you have the right to access, correct, or delete your data. Use Settings → Download My Data for a full export, or Settings → Delete Account to permanently remove your information within 30 days."),
+            ("Data Retention", "Active account data is retained while your account is active. Deleted accounts are permanently purged after 30 days. Anonymised, aggregated statistics may be retained indefinitely."),
+            ("Children's Privacy", "My Meal Planner is not intended for children under 13. We do not knowingly collect data from children. If you believe a child has provided us data, contact us immediately."),
+            ("Contact", "For privacy concerns, contact us at privacy@mymealplanner.app. We respond to all requests within 30 days."),
+        };
+    }
+
+    @foreach (var (title, content) in sections)
+    {
+        <div class="mb-4 p-4 bg-white rounded-3 shadow-sm">
+            <h5 class="fw-bold text-orange mb-2">@title</h5>
+            <p class="text-muted mb-0">@content</p>
+        </div>
+    }
+</div>

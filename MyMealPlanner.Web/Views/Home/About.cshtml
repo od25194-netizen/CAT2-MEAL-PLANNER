@@ -1,0 +1,96 @@
+@* ══ Home/About.cshtml ══════════════════════════════════════════ *@
+@{ ViewData["Title"] = "About My Meal Planner"; }
+
+<div class="container-xl py-5">
+    <!-- Hero -->
+    <div class="row align-items-center g-5 mb-5">
+        <div class="col-lg-6">
+            <div class="tag tag-orange mb-3">🌍 Global Food Platform</div>
+            <h1 class="display-font" style="font-size:3rem;line-height:1.1">
+                Cook the World's<br />Flavours, Every Day.
+            </h1>
+            <p class="text-muted mt-3 fs-5">
+                My Meal Planner is a culturally intelligent, AI-assisted recipe platform
+                that brings together food from 195 countries, real-time nutritional guidance,
+                and a community of passionate cooks from every corner of the world.
+            </p>
+        </div>
+        <div class="col-lg-6 text-center">
+            <div style="font-size:8rem">🍽️</div>
+        </div>
+    </div>
+
+    <!-- Mission -->
+    <div class="row g-4 mb-5">
+        @{
+            var pillars = new[] {
+                ("🌍","Culturally Rich","Every recipe carries the story of its origin — its country, culture, and the people who made it famous."),
+                ("🤖","AI-Powered","Mia, our AI assistant, helps you find recipes, adapt ingredients, and understand nutrition instantly."),
+                ("💚","Health-First","From allergy detection to age-specific nutrition guides, we help you eat with purpose and understanding."),
+                ("🏆","Gamified Learning","Progress through 8 chef levels with personalised quizzes. Earn badges. Join a global community of cooks."),
+                ("📅","Smart Planning","Auto-generate weekly meal plans, scale recipes to your household size, and export shopping lists."),
+                ("🐾","For Everyone","Including your pets. Homemade pet meal recipes, toxic food warnings, and nutritional guides for your animals."),
+            };
+        }
+        @foreach (var (emoji, title, desc) in pillars)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="h-100 bg-white rounded-3 shadow-sm p-4"
+                     style="border-top:3px solid var(--orange)">
+                    <div style="font-size:2.5rem">@emoji</div>
+                    <h5 class="fw-bold mt-3 mb-2">@title</h5>
+                    <p class="text-muted mb-0">@desc</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Technology Stack -->
+    <div class="bg-white rounded-3 shadow-sm p-5 mb-5">
+        <h3 class="display-font mb-4 text-center">Built with World-Class Technology</h3>
+        <div class="row g-3">
+            @{
+                var tech = new[] {
+                    ("ASP.NET Core 8","Backend framework — C# throughout"),
+                    ("Entity Framework Core","Database ORM with SQL Server"),
+                    ("SignalR","Real-time chat and notifications"),
+                    ("Hangfire","Background job scheduling"),
+                    ("Bootstrap 5","Responsive UI framework"),
+                    ("YouTube Data API","In-app video (views credited to creators)"),
+                    ("LibreTranslate","Free open-source translation"),
+                    ("QuestPDF","PDF meal plan exports"),
+                    ("HtmlAgilityPack","Daily recipe web scraping"),
+                    ("Redis","High-performance caching"),
+                    ("Docker","Containerised deployment"),
+                    ("GitHub Actions","CI/CD pipeline"),
+                };
+            }
+            @foreach (var (name, desc) in tech)
+            {
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="p-3 rounded-3 text-center" style="background:var(--light-2)">
+                        <div class="fw-semibold small">@name</div>
+                        <div class="text-muted" style="font-size:.73rem">@desc</div>
+                    </div>
+                </div>
+            }
+        </div>
+        <p class="text-center text-muted small mt-4">
+            Estimated monthly cost at launch: <strong class="text-orange">$0–$15</strong>
+            — entirely open-source tooling.
+        </p>
+    </div>
+
+    <!-- CTA -->
+    <div class="text-center py-4">
+        <h3 class="display-font mb-3">Ready to Cook the World?</h3>
+        <div class="d-flex gap-3 justify-content-center">
+            <a asp-controller="Account" asp-action="Register" class="btn btn-orange btn-lg px-5">
+                Join Free
+            </a>
+            <a asp-controller="Recipe" asp-action="Index" class="btn btn-outline-orange btn-lg px-5">
+                Browse Recipes
+            </a>
+        </div>
+    </div>
+</div>

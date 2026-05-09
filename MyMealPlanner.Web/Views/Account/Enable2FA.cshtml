@@ -1,0 +1,38 @@
+@* ══ Account/Enable2FA.cshtml ════════════════════════════════════ *@
+@model MyMealPlanner.Web.ViewModels.Enable2FAViewModel
+@{ ViewData["Title"] = "Enable Two-Factor Authentication"; }
+
+<div class="container py-5" style="max-width:560px">
+    <h1 class="display-font mb-1">🔐 Enable 2FA</h1>
+    <p class="text-muted mb-4">Scan the QR code below with your authenticator app (Google Authenticator, Authy, etc.)</p>
+
+    <div class="bg-white rounded-3 p-4 shadow-sm mb-4">
+        <!-- QR Code placeholder — in production use a QR library -->
+        <div class="text-center mb-4">
+            <div class="p-4 d-inline-block rounded-3" style="background:var(--light-2)">
+                <div style="font-size:3rem">📱</div>
+                <p class="small text-muted mt-2 mb-0">
+                    Scan QR code with your authenticator app<br />
+                    <strong>or enter this key manually:</strong>
+                </p>
+                <code class="d-block mt-2 p-2 rounded"
+                      style="background:var(--white);font-size:.9rem;letter-spacing:.1em">
+                    @Model.SharedKey
+                </code>
+            </div>
+        </div>
+
+        <form asp-action="Enable2FA" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="alert alert-danger py-2 small mb-3"></div>
+            <div class="mb-4">
+                <label asp-for="Code" class="form-label">Verification Code</label>
+                <input asp-for="Code" class="form-control form-control-lg text-center"
+                       placeholder="Enter 6-digit code" maxlength="7" autofocus
+                       style="letter-spacing:.2em;font-size:1.3rem" />
+                <div class="form-text">Enter the code shown in your authenticator app to verify setup.</div>
+            </div>
+            <button type="submit" class="btn btn-orange w-100 py-2">Enable 2FA</button>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,366 @@
+@{
+    ViewData["Title"] = "Discover Recipes From Every Culture";
+    var globalTrending = ViewBag.GlobalTrending as List<MyMealPlanner.Core.Models.DishRanking> ?? new();
+    var localTrending  = ViewBag.LocalTrending  as List<MyMealPlanner.Core.Models.DishRanking> ?? new();
+    var featured       = ViewBag.Featured       as List<MyMealPlanner.Core.Models.Recipe>       ?? new();
+    var newToday       = ViewBag.NewToday       as List<MyMealPlanner.Core.Models.Recipe>       ?? new();
+    var joke           = ViewBag.DailyJoke      as MyMealPlanner.Core.Models.CookingJoke;
+}
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- HERO -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="hero">
+    <div class="container-xl">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <div class="fade-up">
+                    <div class="tag tag-orange mb-3" style="display:inline-flex">
+                        🌍 @(globalTrending.Count) recipes from every continent
+                    </div>
+                    <h1 class="hero-title">
+                        Cook the <span class="accent">World's</span><br />
+                        Flavours, Every Day
+                    </h1>
+                    <p class="text-white-50 mb-4" style="font-size:1.1rem;max-width:520px">
+                        Discover authentic recipes from 195 countries. Understand the culture,
+                        master the technique, and eat with purpose — at home, in restaurants, or
+                        wherever you cook.
+                    </p>
+
+                    <!-- Hero search -->
+                    <div class="hero-search-bar">
+                        <i class="bi bi-search text-muted"></i>
+                        <input type="text" id="hero-search"
+                               placeholder="Search a dish, ingredient, country or culture…"
+                               onkeydown="if(event.key==='Enter')window.location='/Recipe?q='+encodeURIComponent(this.value)" />
+                        <button class="btn btn-orange" onclick="window.location='/Recipe?q='+document.getElementById('hero-search').value">
+                            Search
+                        </button>
+                    </div>
+
+                    <!-- Quick links -->
+                    <div class="d-flex gap-2 flex-wrap mt-3">
+                        <a href="/Recipe?country=Nigeria"   class="search-pill">🇳🇬 Nigerian</a>
+                        <a href="/Recipe?country=Japan"     class="search-pill">🇯🇵 Japanese</a>
+                        <a href="/Recipe?country=Italy"     class="search-pill">🇮🇹 Italian</a>
+                        <a href="/Recipe?country=India"     class="search-pill">🇮🇳 Indian</a>
+                        <a href="/Recipe?country=Mexico"    class="search-pill">🇲🇽 Mexican</a>
+                        <a href="/Recipe?diet=Vegan"        class="search-pill">🌿 Vegan</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats sidebar -->
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="fade-up stagger-2 d-flex flex-column gap-3">
+                    @{
+                        var stats = new[] {
+                            ("🍽️", "Recipes & Growing", "Daily scraped + community"),
+                            ("🌍", "Countries Covered", "Every continent represented"),
+                            ("👨‍🍳", "Chef Levels", "From Newcomer to Grand Chef"),
+                            ("🏆", "Global Rankings", "Updated every 3 hours"),
+                        };
+                    }
+                    @foreach (var (icon, title, sub) in stats)
+                    {
+                        <div class="d-flex align-items-center gap-3 p-3 rounded-3"
+                             style="background:rgba(255,255,255,.08);backdrop-filter:blur(10px)">
+                            <span style="font-size:2rem">@icon</span>
+                            <div>
+                                <div class="text-white fw-bold">@title</div>
+                                <div class="text-white-50 small">@sub</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- LOCAL TRENDING (if logged in with country) -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+@if (localTrending.Any())
+{
+    <section class="py-5" style="background:var(--orange-light)">
+        <div class="container-xl">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="section-heading mb-0">
+                    🔥 Trending in Your Country
+                </h2>
+                <a asp-controller="Explore" asp-action="Rankings"
+                   asp-route-scope="Country" asp-route-scopeValue="@ViewBag.CountryCode"
+                   class="btn btn-outline-orange btn-sm">View all</a>
+            </div>
+            <div class="row g-3">
+                @foreach (var r in localTrending.Take(4))
+                {
+                    <div class="col-6 col-md-3 fade-up stagger-@(localTrending.IndexOf(r) + 1)">
+                        <partial name="_RecipeCard" model="r.Recipe" />
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- GLOBAL TRENDING -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="py-5">
+    <div class="container-xl">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-heading mb-0">🌍 Global Top Dishes This Week</h2>
+            <a asp-controller="Explore" asp-action="Rankings" class="btn btn-outline-orange btn-sm">
+                Full Rankings
+            </a>
+        </div>
+
+        @if (globalTrending.Any())
+        {
+            <div class="row g-3">
+                <!-- Top 3 prominent -->
+                @foreach (var r in globalTrending.Take(3))
+                {
+                    <div class="col-md-4 fade-up stagger-@(globalTrending.IndexOf(r) + 1)">
+                        <div class="position-relative">
+                            <div class="rank-badge rank-@r.RankPosition position-absolute"
+                                 style="top:.75rem;left:.75rem;z-index:2">
+                                @r.RankPosition
+                            </div>
+                            <partial name="_RecipeCard" model="r.Recipe" />
+                        </div>
+                    </div>
+                }
+                <!-- Next 5 as list -->
+                <div class="col-12">
+                    <div class="bg-white rounded-3 p-3 shadow-sm">
+                        @foreach (var r in globalTrending.Skip(3).Take(5))
+                        {
+                            <div class="ranking-row">
+                                <div class="rank-badge rank-n">@r.RankPosition</div>
+                                @if (r.Recipe?.CoverImageUrl != null)
+                                {
+                                    <img src="@r.Recipe.CoverImageUrl" alt=""
+                                         style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0" />
+                                }
+                                <div class="flex-grow-1">
+                                    <a asp-controller="Recipe" asp-action="Details"
+                                       asp-route-id="@r.Recipe?.Id" asp-route-slug="@r.Recipe?.Slug"
+                                       class="fw-semibold text-dark">@r.Recipe?.Title</a>
+                                    <div class="small text-muted">@r.Recipe?.OriginCountry · @r.Recipe?.MealType</div>
+                                </div>
+                                <div>
+                                    @if (r.WeeklyTrend > 0)
+                                    {
+                                        <span class="rank-trend-up"><i class="bi bi-arrow-up"></i> @r.WeeklyTrend</span>
+                                    }
+                                    else if (r.WeeklyTrend < 0)
+                                    {
+                                        <span class="rank-trend-down"><i class="bi bi-arrow-down"></i> @Math.Abs(r.WeeklyTrend)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="rank-trend-same"><i class="bi bi-dash"></i></span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5 text-muted">
+                <span style="font-size:3rem">🍽️</span>
+                <p class="mt-2">Rankings are calculating. Check back soon!</p>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- EXPLORE BY CONTINENT -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="py-5" style="background:var(--light-2)">
+    <div class="container-xl">
+        <h2 class="section-heading mb-4">🗺️ Explore By Continent</h2>
+        <div class="row g-3">
+            @{
+                var continents = new[] {
+                    ("Africa",   "🌍", "#E8630A", "Nigeria, Morocco, Ethiopia, Ghana…"),
+                    ("Asia",     "🌏", "#2563EB", "Japan, India, Thailand, China…"),
+                    ("Europe",   "🌍", "#22A86B", "Italy, France, Spain, Greece…"),
+                    ("Americas", "🌎", "#E84646", "Mexico, Brazil, USA, Peru…"),
+                    ("Oceania",  "🌏", "#F5A623", "Australia, New Zealand…"),
+                    ("Middle East","🌍","#9333EA","Lebanon, Turkey, Iran, Egypt…"),
+                };
+            }
+            @foreach (var (continent, emoji, color, examples) in continents)
+            {
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a asp-controller="Recipe" asp-action="Index"
+                       asp-route-continent="@continent"
+                       class="text-decoration-none">
+                        <div class="text-center p-3 rounded-3 h-100 fade-up"
+                             style="background:white;border-top:4px solid @color;box-shadow:var(--shadow-sm);transition:all .2s"
+                             onmouseover="this.style.transform='translateY(-4px)'"
+                             onmouseout="this.style.transform=''">
+                            <div style="font-size:2.5rem">@emoji</div>
+                            <div class="fw-bold mt-2" style="color:@color">@continent</div>
+                            <div class="small text-muted mt-1" style="font-size:.73rem">@examples</div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- FEATURED RECIPES -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+@if (featured.Any())
+{
+    <section class="py-5">
+        <div class="container-xl">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="section-heading mb-0">⭐ Featured Recipes</h2>
+                <a asp-controller="Recipe" asp-action="Index" class="btn btn-outline-orange btn-sm">Browse All</a>
+            </div>
+            <div class="row g-3">
+                @foreach (var recipe in featured)
+                {
+                    <div class="col-6 col-md-4 col-lg-2 fade-up stagger-@(featured.IndexOf(recipe) % 6 + 1)">
+                        <partial name="_RecipeCard" model="recipe" />
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- HEALTH TEASER -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="py-5" style="background:linear-gradient(135deg,#0F2027,#203A43,#2C5364);color:white">
+    <div class="container-xl">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-6">
+                <h2 class="section-heading text-white mb-0" style="color:white!important">
+                    💚 Eat Healthy. Live Better.
+                </h2>
+                <p class="text-white-50 mt-3">
+                    Discover what nutrients are in your food, learn the right time to eat,
+                    detect allergens before they cause harm, and heal yourself with the right
+                    ingredients — all in one place.
+                </p>
+                <div class="d-flex gap-2 flex-wrap mt-4">
+                    <a asp-controller="Health" asp-action="Nutrients"
+                       class="btn btn-orange">Nutrient Navigator</a>
+                    <a asp-controller="Health" asp-action="Allergies"
+                       class="btn btn-outline-orange" style="color:white;border-color:white">
+                        Allergy Guide
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="row g-2">
+                    @{
+                        var healthCards = new[] {
+                            ("🟠","Vitamin C","Oranges, Lemons, Peppers","Boosts immunity"),
+                            ("🔴","Iron","Spinach, Red Meat, Lentils","Fights fatigue"),
+                            ("🟡","Vitamin D","Salmon, Eggs, Mushrooms","Strong bones"),
+                            ("🟢","Fibre","Oats, Broccoli, Apples","Gut health"),
+                        };
+                    }
+                    @foreach (var (dot, name, foods, benefit) in healthCards)
+                    {
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 h-100" style="background:rgba(255,255,255,.08)">
+                                <div class="mb-1">@dot <strong>@name</strong></div>
+                                <div class="small text-white-50">@foods</div>
+                                <div class="small mt-1" style="color:#22A86B">@benefit</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- DAILY JOKE -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+@if (joke != null)
+{
+    <section class="py-4" style="background:var(--orange-light)">
+        <div class="container-xl">
+            <div class="d-flex align-items-center gap-4 flex-wrap">
+                <span style="font-size:2.5rem">😂</span>
+                <div class="flex-grow-1">
+                    <div class="small fw-bold text-orange mb-1">JOKE OF THE DAY</div>
+                    <p class="mb-0 fw-semibold" style="font-family:var(--font-display)">
+                        @joke.Body
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-orange btn-sm"
+                            data-joke-like="@joke.Id">
+                        <i class="bi bi-hand-thumbs-up"></i> @joke.LikeCount
+                    </button>
+                    <a asp-controller="Jokes" asp-action="Index" class="btn btn-orange btn-sm">
+                        More Jokes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- NEW TODAY -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+@if (newToday.Any())
+{
+    <section class="py-5">
+        <div class="container-xl">
+            <h2 class="section-heading mb-4">🆕 Added Today</h2>
+            <div class="row g-3">
+                @foreach (var recipe in newToday.Take(8))
+                {
+                    <div class="col-6 col-md-3 fade-up stagger-@(newToday.IndexOf(recipe) % 4 + 1)">
+                        <partial name="_RecipeCard" model="recipe" />
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CALL TO ACTION — Join -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+@if (!User.Identity?.IsAuthenticated ?? true)
+{
+    <section class="py-5 text-center"
+             style="background:var(--dark);color:white">
+        <div class="container-xl">
+            <h2 class="display-font mb-3" style="font-size:2.5rem">
+                Ready to Level Up Your Cooking? 🌟
+            </h2>
+            <p class="text-white-50 mb-4" style="max-width:550px;margin:0 auto 1.5rem">
+                Join free. Build your cooking profile. Take quizzes to earn your chef badge.
+                Save recipes from every corner of the world.
+            </p>
+            <a asp-controller="Account" asp-action="Register"
+               class="btn btn-orange btn-lg px-5">
+                Create Your Free Account
+            </a>
+        </div>
+    </section>
+}

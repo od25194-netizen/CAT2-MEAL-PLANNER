@@ -1,0 +1,37 @@
+@* ══ Account/LoginWith2FA.cshtml ════════════════════════════════ *@
+@model MyMealPlanner.Web.ViewModels.TwoFactorViewModel
+@{ ViewData["Title"] = "Two-Factor Authentication"; }
+
+<div class="container py-5" style="max-width:440px">
+    <div class="text-center mb-4">
+        <div style="font-size:3rem">🔐</div>
+        <h1 class="display-font" style="font-size:1.8rem">Two-Factor Authentication</h1>
+        <p class="text-muted">Enter the 6-digit code from your authenticator app.</p>
+    </div>
+    <div class="bg-white rounded-3 p-4 shadow-sm">
+        <form asp-action="LoginWith2FA" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ReturnUrl" />
+            <input type="hidden" asp-for="RememberMachine" />
+            <div asp-validation-summary="All" class="alert alert-danger py-2 small mb-3"></div>
+            <div class="mb-4">
+                <label asp-for="Code" class="form-label">Authenticator Code</label>
+                <input asp-for="Code" class="form-control form-control-lg text-center"
+                       maxlength="7" placeholder="000000" autocomplete="one-time-code"
+                       inputmode="numeric" autofocus
+                       style="letter-spacing:.3em;font-size:1.4rem;font-weight:700" />
+            </div>
+            <div class="form-check mb-4">
+                <input asp-for="RememberMachine" class="form-check-input" type="checkbox" />
+                <label asp-for="RememberMachine" class="form-check-label small">
+                    Remember this device for 30 days
+                </label>
+            </div>
+            <button type="submit" class="btn btn-orange w-100 py-2">Verify</button>
+        </form>
+    </div>
+    <div class="text-center mt-3 text-muted small">
+        Lost your authenticator?
+        <a asp-action="LoginWithRecoveryCode" class="text-orange">Use a recovery code</a>
+    </div>
+</div>

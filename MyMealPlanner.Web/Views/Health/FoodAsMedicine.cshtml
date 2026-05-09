@@ -1,0 +1,72 @@
+@* ═══ Health/FoodAsMedicine.cshtml ══════════════════════════════ *@
+@model List<MyMealPlanner.Core.Models.FoodHealthBenefit>
+@{ ViewData["Title"] = "Heal Yourself With Food"; }
+
+<div class="container-xl py-4">
+    <h1 class="section-heading">💊 Heal Yourself With Food</h1>
+    <p class="text-muted mb-2">
+        Certain foods have powerful healing properties — backed by science and centuries of traditional medicine.
+        Use this as a guide alongside professional medical advice.
+    </p>
+    <div class="tag tag-country mb-5">
+        <i class="bi bi-info-circle"></i>
+        This is general nutritional guidance, not medical advice. Consult your doctor for health concerns.
+    </div>
+
+    <div class="row g-3">
+        @foreach (var benefit in Model)
+        {
+            <div class="col-12 col-md-6 fade-up">
+                <div class="bg-white rounded-3 shadow-sm p-4 h-100"
+                     style="border-left:4px solid var(--orange);transition:.2s"
+                     onmouseover="this.style.transform='translateX(4px)'"
+                     onmouseout="this.style.transform=''">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span style="font-size:2rem">@benefit.IconEmoji</span>
+                        <h5 class="fw-bold mb-0">@benefit.Condition</h5>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="tag tag-green mb-2">✅ Food Remedies</div>
+                        <p class="mb-0">@benefit.FoodRemedy</p>
+                    </div>
+
+                    <div class="mb-3 p-3 rounded-2" style="background:var(--orange-light)">
+                        <strong style="font-size:.85rem">How to use:</strong>
+                        <p class="mb-0 small mt-1">@benefit.HowToUse</p>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(benefit.FoodsToAvoid))
+                    {
+                        <div>
+                            <div class="tag tag-red mb-2">❌ Avoid</div>
+                            <p class="mb-0 small">@benefit.FoodsToAvoid</p>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(benefit.SourceReference))
+                    {
+                        <div class="mt-3 small text-muted">
+                            <i class="bi bi-book"></i> @benefit.SourceReference
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Search Recipes -->
+    <div class="text-center mt-5">
+        <h3 class="display-font">Find Healing Recipes</h3>
+        <p class="text-muted mb-4">Search our database for recipes featuring these healing ingredients</p>
+        <div class="d-flex gap-2 justify-content-center flex-wrap">
+            @foreach (var tag in new[] { "Turmeric","Ginger","Garlic","Salmon","Blueberry","Spinach","Oats","Avocado" })
+            {
+                <a asp-controller="Recipe" asp-action="Index" asp-route-q="@tag"
+                   class="search-pill">@tag</a>
+            }
+        </div>
+    </div>
+</div>
+
+@* ═══ Health/WhenToEat.cshtml ════════════════════════════════════ *@

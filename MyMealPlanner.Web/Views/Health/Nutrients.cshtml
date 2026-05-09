@@ -1,0 +1,185 @@
+@using MyMealPlanner.Core.Enums
+@{
+    ViewData["Title"] = "Nutrient Navigator";
+    var allCategories = ViewBag.AllCategories as List<NutrientCategory> ?? new();
+    var selected      = ViewBag.SelectedCategory as NutrientCategory?;
+    var foods         = ViewBag.Foods as List<MyMealPlanner.Core.Models.NutrientFood> ?? new();
+    var recipes       = ViewBag.Recipes as List<MyMealPlanner.Core.Models.Recipe> ?? new();
+
+    var nutrientMeta = new Dictionary<NutrientCategory, (string emoji, string color, string benefit, string dailyTarget)>
+    {
+        [NutrientCategory.VitaminC]       = ("🟠", "#E8630A", "Immunity, skin, iron absorption", "65–90mg"),
+        [NutrientCategory.VitaminD]       = ("🟡", "#F5A623", "Bone health, immunity, mood", "15–20mcg"),
+        [NutrientCategory.VitaminA]       = ("🔴", "#E84646", "Vision, immune function, skin", "700–900mcg"),
+        [NutrientCategory.VitaminB]       = ("🔵", "#2563EB", "Energy, nerve function, red blood cells", "Various"),
+        [NutrientCategory.VitaminE]       = ("🟢", "#22A86B", "Antioxidant, immune support", "15mg"),
+        [NutrientCategory.VitaminK]       = ("🟤", "#8B5E3C", "Blood clotting, bone health", "90–120mcg"),
+        [NutrientCategory.Protein]        = ("💪", "#7C3AED", "Muscle, repair, enzymes", "50–60g"),
+        [NutrientCategory.Carbohydrates]  = ("⚡", "#F59E0B", "Primary energy source", "225–325g"),
+        [NutrientCategory.HealthyFats]    = ("🥑", "#059669", "Brain, hormones, cell structure", "44–78g"),
+        [NutrientCategory.Fibre]          = ("🌿", "#10B981", "Gut health, cholesterol", "25–38g"),
+        [NutrientCategory.Calcium]        = ("⚪", "#6B7280", "Bones, teeth, muscle function", "1000mg"),
+        [NutrientCategory.Iron]           = ("🔴", "#DC2626", "Oxygen transport, energy", "8–18mg"),
+        [NutrientCategory.Zinc]           = ("🔵", "#1D4ED8", "Immunity, healing, taste", "8–11mg"),
+        [NutrientCategory.Magnesium]      = ("🟢", "#047857", "Muscle, nerve, blood sugar", "310–420mg"),
+        [NutrientCategory.Potassium]      = ("🟡", "#D97706", "Heart, fluid balance, nerves", "2600–3400mg"),
+        [NutrientCategory.Omega3]         = ("🐟", "#0284C7", "Brain, heart, inflammation", "1.1–1.6g"),
+        [NutrientCategory.Antioxidants]   = ("🫐", "#7C3AED", "Cell protection, anti-aging", "Varied"),
+        [NutrientCategory.Probiotics]     = ("🦠", "#22A86B", "Gut microbiome, immunity", "1B CFU"),
+        [NutrientCategory.Folate]         = ("🟢", "#16A34A", "DNA, pregnancy, cell growth", "400mcg"),
+        [NutrientCategory.Sodium]         = ("🧂", "#6B7280", "Fluid balance (limit excess)", "<2300mg"),
+    };
+}
+
+<div class="container-xl py-4">
+    <h1 class="section-heading">🥗 Nutrient Navigator</h1>
+    <p class="text-muted mb-4">
+        Click any nutrient category below to explore every food that contains it,
+        cultural sources from around the world, and recipes that maximise it.
+    </p>
+
+    <!-- ══ Nutrient Category Grid ═══════════════════════════════ -->
+    <div class="row g-3 mb-5">
+        @foreach (var cat in allCategories)
+        {
+            var meta   = nutrientMeta.GetValueOrDefault(cat, ("💊", "#6B7280", "", ""));
+            var active = selected == cat ? "active" : "";
+
+            <div class="col-6 col-md-3 col-lg-2">
+                <a asp-action="Nutrients" asp-route-category="@cat"
+                   class="text-decoration-none">
+                    <div class="nutrient-card @active">
+                        <span class="nutrient-emoji">@meta.emoji</span>
+                        <div class="nutrient-name">@cat.ToString().Replace("Vitamin", "Vit.")</div>
+                        <div class="small text-muted mt-1" style="font-size:.72rem">@meta.dailyTarget</div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- ══ Selected Nutrient Detail ══════════════════════════════ -->
+    @if (selected.HasValue)
+    {
+        var meta = nutrientMeta.GetValueOrDefault(selected.Value, ("💊", "#6B7280", "", ""));
+
+        <div class="p-4 rounded-3 mb-5 fade-up"
+             style="background:var(--white);border-top:4px solid @meta.color;box-shadow:var(--shadow)">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div style="font-size:4rem">@meta.emoji</div>
+                    <h2 class="display-font mt-2">@selected.Value</h2>
+                    <div class="tag tag-orange mb-2">Daily Target: @meta.dailyTarget</div>
+                    <p class="text-muted">@meta.benefit</p>
+
+                    <div class="mt-3 p-3 rounded-3" style="background:var(--light-2)">
+                        <div class="fw-bold small mb-1">⚠️ Deficiency Signs</div>
+                        <div class="small text-muted">
+                            @(selected.Value switch {
+                                NutrientCategory.VitaminC      => "Fatigue, bleeding gums, slow healing, frequent infections",
+                                NutrientCategory.Iron          => "Fatigue, pale skin, shortness of breath, brittle nails",
+                                NutrientCategory.VitaminD      => "Bone pain, muscle weakness, fatigue, depression",
+                                NutrientCategory.Calcium       => "Weak bones, muscle cramps, numbness, brittle nails",
+                                NutrientCategory.Protein       => "Muscle loss, poor immunity, slow wound healing",
+                                NutrientCategory.Omega3        => "Dry skin, poor memory, mood swings, joint pain",
+                                _                              => "Consult a healthcare professional for specific symptoms."
+                            })
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-8">
+                    <h5 class="fw-bold mb-3">🏅 Top Food Sources</h5>
+                    @if (foods.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Food</th>
+                                        <th>Amount per 100g</th>
+                                        <th>Region</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var food in foods.Take(15))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <span class="rank-badge @(food.SortRank <= 3 ? $"rank-{food.SortRank}" : "rank-n")"
+                                                      style="width:28px;height:28px;font-size:.8rem">
+                                                    @food.SortRank
+                                                </span>
+                                            </td>
+                                            <td class="fw-semibold">
+                                                @if (!string.IsNullOrEmpty(food.ImageUrl))
+                                                {<img src="@food.ImageUrl" alt="" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:.4rem"/>}
+                                                @food.FoodName
+                                            </td>
+                                            <td>@food.AmountPer100g @food.Unit</td>
+                                            <td class="text-muted small">@food.RegionAvailability</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Visual bar chart -->
+                        <div class="mt-3">
+                            @{var maxAmt = foods.FirstOrDefault()?.AmountPer100g ?? 1;}
+                            @foreach (var food in foods.Take(8))
+                            {
+                                var pct = maxAmt > 0 ? (double)food.AmountPer100g / (double)maxAmt * 100 : 0;
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <div style="width:140px;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                                        @food.FoodName
+                                    </div>
+                                    <div class="flex-grow-1 level-bar">
+                                        <div class="level-bar-fill" style="width:@pct%;background:@meta.color"></div>
+                                    </div>
+                                    <div style="width:80px;font-size:.78rem;text-align:right;color:var(--mid)">
+                                        @food.AmountPer100g@food.Unit
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted text-center py-4">
+                            <i class="bi bi-database-x fs-2"></i>
+                            <p class="mt-2">Food data for this nutrient is being populated.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Recipes High In This Nutrient ── -->
+        @if (recipes.Any())
+        {
+            <h3 class="section-heading">🍳 Recipes Rich in @selected.Value</h3>
+            <div class="row g-3">
+                @foreach (var recipe in recipes)
+                {
+                    <div class="col-6 col-md-3 fade-up stagger-@(recipes.IndexOf(recipe) % 4 + 1)">
+                        <partial name="_RecipeCard" model="recipe" />
+                    </div>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <!-- Call to action when nothing selected -->
+        <div class="text-center py-5">
+            <div style="font-size:4rem">☝️</div>
+            <h3 class="display-font mt-3">Select a Nutrient Above</h3>
+            <p class="text-muted">
+                Click any nutrient card to explore top food sources, daily targets,
+                deficiency signs, and recipes from every culture that maximise that nutrient.
+            </p>
+        </div>
+    }
+</div>

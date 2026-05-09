@@ -1,0 +1,63 @@
+@* ══ Admin/ReviewQueue.cshtml ════════════════════════════════════ *@
+@model List<MyMealPlanner.Core.Models.Recipe>
+@{ ViewData["Title"] = "Recipe Review Queue"; }
+
+<div class="container-xl py-4">
+    <h1 class="display-font mb-4">👁️ Recipe Review Queue</h1>
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-check-circle fs-1 d-block mb-3 text-success"></i>
+            <p>Queue is clear! All recipes have been reviewed.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var recipe in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="bg-white rounded-3 shadow-sm p-3 h-100">
+                        @if (!string.IsNullOrEmpty(recipe.CoverImageUrl))
+                        {
+                            <img src="@recipe.CoverImageUrl" alt="" class="w-100 rounded-2 mb-3"
+                                 style="height:120px;object-fit:cover" />
+                        }
+                        <div class="fw-bold mb-1">@recipe.Title</div>
+                        <div class="small text-muted mb-2">
+                            @recipe.OriginCountry · @recipe.Source · @recipe.CreatedAt.ToString("MMM d")
+                        </div>
+                        <div class="text-muted small mb-3"
+                             style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+                            @recipe.Description
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm flex-grow-1 publish-btn"
+                                    data-id="@recipe.Id">✅ Publish</button>
+                            <a asp-controller="Recipe" asp-action="Details"
+                               asp-route-id="@recipe.Id" target="_blank"
+                               class="btn btn-outline-orange btn-sm">Preview</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+document.querySelectorAll('.publish-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const fd = new FormData();
+        fd.append('id', btn.dataset.id);
+        fd.append('__RequestVerificationToken', document.querySelector('[name=__RequestVerificationToken]')?.value || '');
+        await fetch('/Admin/PublishRecipe', { method: 'POST', body: fd });
+        btn.closest('.bg-white').style.opacity = '.4';
+        btn.textContent = '✅ Published';
+        btn.disabled = true;
+    });
+});
+</script>
+@Html.AntiForgeryToken()
+}

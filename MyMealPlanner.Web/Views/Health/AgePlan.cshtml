@@ -1,0 +1,107 @@
+@* ══ Health/AgePlan.cshtml ══════════════════════════════════════ *@
+@using MyMealPlanner.Core.Enums
+@{
+    ViewData["Title"] = "Eat by Age";
+    var bracket = (AgeBracket)(ViewBag.Bracket ?? AgeBracket.Adults);
+    var recipes = ViewBag.Recipes as List<MyMealPlanner.Core.Models.Recipe> ?? new();
+
+    var agePlans = new Dictionary<AgeBracket, (string emoji, string range, string focus, string[] eat, string[] limit, string note)>
+    {
+        [AgeBracket.Infants]    = ("👶","0–2 years","Iron, Vitamin D, DHA for brain development",
+            ["Breast milk / formula","Pureed vegetables","Mashed banana","Iron-fortified cereals","Soft-cooked eggs (after 6 months)"],
+            ["Honey (under 1)","Cow's milk (under 1)","Added salt or sugar","Choking hazards"],
+            "Introduce one new food at a time. Watch for allergic reactions."),
+        [AgeBracket.Children]   = ("🧒","3–12 years","Calcium, Protein, Vitamin C for growth",
+            ["Dairy (milk, cheese, yoghurt)","Eggs","Fruits and vegetables","Whole grains","Lean meat, fish, legumes"],
+            ["Sugary drinks","Ultra-processed snacks","Excessive salt"],
+            "Active kids need more calories. Don't restrict healthy fats — they're essential for brain development."),
+        [AgeBracket.Teenagers]  = ("🧑","13–19 years","Iron (girls), Zinc, Calcium for bone density",
+            ["Red meat or iron-rich plants","Dairy for calcium","Vitamin C with iron","Protein for muscle","Complex carbs for energy"],
+            ["Energy drinks","Skipping breakfast","Crash diets"],
+            "Teenagers have high energy needs. Iron deficiency is common in teenage girls — monitor closely."),
+        [AgeBracket.YoungAdults]= ("👨‍💼","20–35 years","Balanced nutrition, Gut health, Folate (women)",
+            ["Fermented foods (yoghurt, kefir)","Leafy greens","Omega-3 rich fish","Whole grains","Varied protein sources"],
+            ["Excessive alcohol","Processed food","Too much caffeine"],
+            "This is when good habits set the foundation. Folate is critical for women planning pregnancy."),
+        [AgeBracket.Adults]     = ("👨‍👩‍👧","36–55 years","Heart health, Fibre, Antioxidants",
+            ["Fatty fish (salmon, mackerel)","Berries and dark greens","Olive oil","Nuts and seeds","Legumes and whole grains"],
+            ["Saturated fats","Processed meats","Excess sodium","Sugar-sweetened drinks"],
+            "Metabolism slows in this bracket. Focus on nutrient density over calorie density."),
+        [AgeBracket.Seniors]    = ("🧓","56–70 years","Calcium, Vitamin D, B12, Lower sodium",
+            ["Fortified milk or alternatives","Fatty fish","Eggs","Soft-cooked vegetables","Lean protein"],
+            ["High sodium processed foods","Alcohol","Empty calories"],
+            "Bone density decreases with age. Weight-bearing exercise + calcium + Vitamin D are the winning trio."),
+        [AgeBracket.Elderly]    = ("👴","70+ years","B12, Hydration, Easy-to-digest foods",
+            ["Soups and stews","Fortified cereals","Soft fruit","Eggs","Small frequent meals"],
+            ["Hard-to-digest foods","Excess fibre if digestive issues","Dehydrating foods"],
+            "Older adults often don't feel thirsty even when dehydrated. Encourage fluids proactively."),
+    };
+
+    var plan = agePlans[bracket];
+}
+
+<div class="container-xl py-4">
+    <h1 class="section-heading">👶 Eat by Age Bracket</h1>
+    <p class="text-muted mb-4">Select an age group to see tailored nutritional guidance and recipes.</p>
+
+    <!-- Age Selector -->
+    <div class="d-flex flex-wrap gap-2 mb-5">
+        @foreach (var b in Enum.GetValues<AgeBracket>())
+        {
+            var p = agePlans[b];
+            <a asp-action="AgePlan" asp-route-bracket="@b"
+               class="tag @(b == bracket ? "tag-orange" : "tag-country")"
+               style="font-size:.85rem;cursor:pointer;padding:.4rem .9rem">
+                @p.emoji @b.ToString().Replace("_"," ")
+                <span class="ms-1" style="opacity:.7;font-size:.75rem">@p.range</span>
+            </a>
+        }
+    </div>
+
+    <!-- Plan Card -->
+    <div class="bg-white rounded-3 shadow-sm p-4 mb-5 fade-up"
+         style="border-top:4px solid var(--orange)">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div style="font-size:4rem text-center">@plan.emoji</div>
+                <h2 class="display-font mt-2">@bracket.ToString().Replace("_"," ")</h2>
+                <div class="tag tag-orange mb-3">@plan.range</div>
+                <p class="text-muted">@plan.note</p>
+            </div>
+            <div class="col-md-4">
+                <h6 class="fw-bold text-orange mb-3">✅ Focus: @plan.focus</h6>
+                <div class="fw-semibold small mb-2 text-muted">EAT PLENTY OF:</div>
+                @foreach (var food in plan.eat)
+                {
+                    <div class="d-flex align-items-center gap-2 py-2 border-bottom">
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                        <span class="small">@food</span>
+                    </div>
+                }
+            </div>
+            <div class="col-md-4">
+                <h6 class="fw-bold mb-3" style="color:var(--red)">⚠️ Limit or Avoid:</h6>
+                @foreach (var food in plan.limit)
+                {
+                    <div class="d-flex align-items-center gap-2 py-2 border-bottom">
+                        <i class="bi bi-x-circle-fill text-danger"></i>
+                        <span class="small">@food</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (recipes.Any())
+    {
+        <h3 class="section-heading mb-4">🍽️ Recommended Recipes for @bracket</h3>
+        <div class="row g-3">
+            @foreach (var r in recipes)
+            {
+                <div class="col-6 col-md-3 fade-up">
+                    <partial name="_RecipeCard" model="r" />
+                </div>
+            }
+        </div>
+    }
+</div>

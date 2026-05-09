@@ -1,0 +1,213 @@
+@* ═══ MealPlan/Index.cshtml ══════════════════════════════════════ *@
+@using MyMealPlanner.Core.Enums
+@{
+    ViewData["Title"] = "My Meal Planner";
+    var plan     = ViewBag.CurrentPlan as MyMealPlanner.Core.Models.MealPlan;
+    var items    = ViewBag.PlanItems as List<MyMealPlanner.Core.Models.MealPlanItem> ?? new();
+    var shopping = ViewBag.ShoppingList as MyMealPlanner.Core.Models.ShoppingList;
+    var days     = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+    var mealTypes = new[] { MealType.Breakfast, MealType.Lunch, MealType.Dinner };
+}
+
+<div class="container-xl py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h1 class="display-font mb-0">📅 Weekly Meal Plan</h1>
+            @if (plan != null)
+            { <div class="text-muted small">Week of @plan.WeekStartDate.ToString("MMMM d, yyyy")</div> }
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <form asp-action="Generate" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-orange btn-sm">
+                    <i class="bi bi-magic"></i> Auto-Generate Plan
+                </button>
+            </form>
+            @if (plan != null)
+            {
+                <a asp-action="ShoppingList" asp-route-id="@plan.Id" class="btn btn-orange btn-sm">
+                    <i class="bi bi-cart3"></i> Shopping List
+                </a>
+                <a asp-action="ExportPdf" asp-route-id="@plan.Id" class="btn btn-outline-orange btn-sm">
+                    <i class="bi bi-filetype-pdf"></i> Export PDF
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Meal Grid -->
+    <div class="bg-white rounded-3 shadow-sm overflow-hidden mb-4">
+        <div class="table-responsive">
+            <table class="table table-bordered mb-0" id="meal-grid">
+                <thead>
+                    <tr style="background:var(--orange);color:white">
+                        <th class="py-3 px-3" style="width:100px">Meal</th>
+                        @foreach (var day in days)
+                        {
+                            <th class="py-3 px-2 text-center" style="min-width:120px">
+                                <div class="fw-bold">@day.Substring(0,3)</div>
+                                <div class="small opacity-75">@day</div>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var mealType in mealTypes)
+                    {
+                        <tr>
+                            <td class="fw-semibold py-3 px-3 align-middle"
+                                style="background:var(--orange-light);font-size:.85rem">
+                                @mealType
+                            </td>
+                            @for (int day = 1; day <= 7; day++)
+                            {
+                                var item = items.FirstOrDefault(i => i.DayOfWeek == day && i.MealType == mealType);
+                                <td class="meal-cell py-2 px-2 align-middle"
+                                    data-day="@day" data-meal="@mealType"
+                                    style="cursor:pointer;vertical-align:top;min-height:80px">
+                                    @if (item?.Recipe != null)
+                                    {
+                                        <div class="meal-slot-filled p-2 rounded-2 h-100"
+                                             style="background:var(--orange-light);border:1px solid rgba(232,99,10,.3);font-size:.8rem">
+                                            @if (item.Recipe.CoverImageUrl != null)
+                                            {
+                                                <img src="@item.Recipe.CoverImageUrl" alt=""
+                                                     style="width:100%;height:50px;object-fit:cover;border-radius:6px;margin-bottom:.3rem" />
+                                            }
+                                            <div class="fw-semibold" style="line-height:1.2">
+                                                @item.Recipe.Title
+                                            </div>
+                                            <div class="text-muted" style="font-size:.7rem">
+                                                @(item.Recipe.PrepTimeMinutes + item.Recipe.CookTimeMinutes) min
+                                            </div>
+                                            <form asp-action="RemovePlanItem" method="post" class="mt-1">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="itemId" value="@item.Id" />
+                                                <button type="submit" class="btn btn-sm p-0 text-danger"
+                                                        style="font-size:.7rem">
+                                                    <i class="bi bi-x"></i> Remove
+                                                </button>
+                                            </form>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="meal-slot-empty d-flex align-items-center justify-content-center h-100"
+                                             style="min-height:80px;border:2px dashed var(--light-2);border-radius:8px;color:var(--mid);font-size:.75rem;transition:.15s"
+                                             onclick="openRecipePicker(@day, '@mealType')">
+                                            <span>+ Add</span>
+                                        </div>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Shopping List Preview -->
+    @if (shopping?.Items != null && shopping.Items.Any())
+    {
+        <div class="bg-white rounded-3 shadow-sm p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">🛒 Shopping List</h5>
+                <span class="tag tag-orange">@shopping.Items.Count items</span>
+            </div>
+            <div class="row g-2">
+                @foreach (var item in shopping.Items.GroupBy(i => i.StoreSection ?? "Other"))
+                {
+                    <div class="col-12 col-md-6">
+                        <div class="fw-semibold small text-muted mb-2 text-uppercase"
+                             style="letter-spacing:.05em">@item.Key</div>
+                        @foreach (var si in item)
+                        {
+                            <div class="shopping-item @(si.IsPurchased ? "checked" : "")">
+                                <input type="checkbox" class="form-check-input"
+                                       @(si.IsPurchased ? "checked" : "")
+                                       onchange="toggleShoppingItem(this, @si.Id)" />
+                                <label class="flex-grow-1">
+                                    @si.Quantity @si.Unit @si.IngredientName
+                                    @if (si.EstimatedCost.HasValue)
+                                    { <span class="text-muted small">~$@si.EstimatedCost.Value.ToString("F2")</span> }
+                                </label>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Recipe Picker Modal -->
+<div class="modal fade" id="recipe-picker-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Choose a Recipe</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control mb-3" id="picker-search"
+                       placeholder="Search recipes…" />
+                <div class="row g-2" id="picker-results"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let pickerDay = 1, pickerMeal = 'Breakfast';
+const pickerModal = new bootstrap.Modal(document.getElementById('recipe-picker-modal'));
+
+function openRecipePicker(day, meal) {
+    pickerDay = day; pickerMeal = meal;
+    loadPickerRecipes('');
+    pickerModal.show();
+}
+
+document.getElementById('picker-search')?.addEventListener('input', function() {
+    clearTimeout(window._pt);
+    window._pt = setTimeout(() => loadPickerRecipes(this.value), 300);
+});
+
+async function loadPickerRecipes(q) {
+    const resp = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=12`);
+    const data = await resp.json();
+    const container = document.getElementById('picker-results');
+    if (!container) return;
+    container.innerHTML = data.map(r => `
+        <div class="col-6 col-md-4">
+            <div class="recipe-card" onclick="addToPlan(${r.id}, ${pickerDay}, '${pickerMeal}')" style="cursor:pointer">
+                ${r.coverImageUrl ? `<img src="${r.coverImageUrl}" class="recipe-card-img" />` : '<div class="recipe-card-img-placeholder">🍽️</div>'}
+                <div class="recipe-card-body">
+                    <div class="recipe-card-title">${r.title}</div>
+                    <div class="small text-muted">${r.originCountry || ''}</div>
+                </div>
+            </div>
+        </div>`).join('');
+}
+
+async function addToPlan(recipeId, day, mealType) {
+    await fetch('/MealPlan/AddItem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': document.querySelector('[name=__RequestVerificationToken]')?.value || '' },
+        body: JSON.stringify({ recipeId, dayOfWeek: day, mealType })
+    });
+    pickerModal.hide();
+    window.location.reload();
+}
+
+async function toggleShoppingItem(checkbox, itemId) {
+    await fetch(`/MealPlan/ToggleShoppingItem/${itemId}`, {
+        method: 'POST',
+        headers: { 'RequestVerificationToken': document.querySelector('[name=__RequestVerificationToken]')?.value || '' }
+    });
+    checkbox.closest('.shopping-item')?.classList.toggle('checked', checkbox.checked);
+}
+</script>
+@Html.AntiForgeryToken()
+}

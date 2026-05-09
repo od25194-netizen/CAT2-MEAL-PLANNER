@@ -1,0 +1,173 @@
+@* ══ Recipe/Suggest.cshtml ══════════════════════════════════════ *@
+@{ ViewData["Title"] = "Suggest a Recipe"; }
+
+<div class="container py-4" style="max-width:760px">
+    <h1 class="display-font mb-1">💡 Suggest a Recipe</h1>
+    <p class="text-muted mb-4">
+        Share a recipe from your culture, family, or personal discovery.
+        If approved, it will be published on My Meal Planner and attributed to you. 🌍
+    </p>
+
+    <div class="bg-white rounded-3 shadow-sm p-4">
+        <form asp-action="Suggest" method="post">
+            @Html.AntiForgeryToken()
+
+            <!-- Basic Info -->
+            <h6 class="fw-bold text-orange mb-3">📝 Recipe Details</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-12">
+                    <label class="form-label">Recipe Name *</label>
+                    <input name="Title" type="text" class="form-control"
+                           placeholder="e.g. Grandma's Jollof Rice" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Country of Origin</label>
+                    <input name="CountryOfOrigin" type="text" class="form-control"
+                           placeholder="e.g. Nigeria, Japan, Italy…" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Culture / Cuisine Tag</label>
+                    <input name="CultureTag" type="text" class="form-control"
+                           placeholder="e.g. West African, Mediterranean…" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Description *</label>
+                    <textarea name="Description" class="form-control" rows="3" required
+                              placeholder="Tell us about this dish — what makes it special, when it's eaten, who makes it…"></textarea>
+                </div>
+            </div>
+
+            <!-- Ingredients -->
+            <h6 class="fw-bold text-orange mb-3">🥘 Ingredients</h6>
+            <div id="ingredients-list" class="mb-3">
+                @for (int i = 0; i < 5; i++)
+                {
+                    <div class="row g-2 mb-2 ingredient-row">
+                        <div class="col-5">
+                            <input name="IngredientNames[@i]" type="text" class="form-control form-control-sm"
+                                   placeholder="Ingredient name" />
+                        </div>
+                        <div class="col-3">
+                            <input name="IngredientQtys[@i]" type="number" class="form-control form-control-sm"
+                                   placeholder="Qty" min="0" step="0.1" />
+                        </div>
+                        <div class="col-3">
+                            <select name="IngredientUnits[@i]" class="form-select form-select-sm">
+                                <option value="g">g</option>
+                                <option value="kg">kg</option>
+                                <option value="ml">ml</option>
+                                <option value="l">l</option>
+                                <option value="cup">cup</option>
+                                <option value="tbsp">tbsp</option>
+                                <option value="tsp">tsp</option>
+                                <option value="item">item</option>
+                                <option value="clove">clove</option>
+                            </select>
+                        </div>
+                        <div class="col-1 d-flex align-items-center">
+                            @if (i > 0)
+                            {
+                                <button type="button" class="btn btn-sm btn-link text-danger p-0"
+                                        onclick="this.closest('.ingredient-row').remove()">✕</button>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+            <button type="button" class="btn btn-outline-orange btn-sm mb-4" id="add-ingredient">
+                <i class="bi bi-plus"></i> Add Ingredient
+            </button>
+
+            <!-- Steps -->
+            <h6 class="fw-bold text-orange mb-3">👨‍🍳 Method / Steps</h6>
+            <div id="steps-list" class="mb-3">
+                @for (int i = 1; i <= 3; i++)
+                {
+                    <div class="d-flex gap-2 mb-2 step-row">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0 step-num"
+                             style="width:30px;height:30px;background:var(--orange);font-size:.8rem">@i</div>
+                        <textarea name="Steps[@(i-1)]" class="form-control form-control-sm" rows="2"
+                                  placeholder="Describe step @i…"></textarea>
+                        @if (i > 1)
+                        {
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 align-self-start"
+                                    onclick="this.closest('.step-row').remove();renumberSteps()">✕</button>
+                        }
+                    </div>
+                }
+            </div>
+            <button type="button" class="btn btn-outline-orange btn-sm mb-4" id="add-step">
+                <i class="bi bi-plus"></i> Add Step
+            </button>
+
+            <!-- Media -->
+            <h6 class="fw-bold text-orange mb-3">📸 Media (Optional)</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Cover Photo URL</label>
+                    <input name="CoverImageUrl" type="url" class="form-control"
+                           placeholder="https://your-image-url.jpg" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">YouTube Video ID</label>
+                    <input name="YouTubeVideoId" type="text" class="form-control"
+                           placeholder="e.g. dQw4w9WgXcQ" />
+                    <div class="form-text">The ID from the YouTube URL after ?v=</div>
+                </div>
+            </div>
+
+            <div class="p-3 rounded-3 mb-4" style="background:var(--orange-light)">
+                <i class="bi bi-info-circle text-orange"></i>
+                Your recipe will be reviewed by our team before publishing.
+                Quality recipes are credited to you with your username and country flag. 🏳️
+            </div>
+
+            <button type="submit" class="btn btn-orange w-100 py-2">
+                <i class="bi bi-send"></i> Submit Recipe for Review
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let ingCount = 5;
+let stepCount = 3;
+
+document.getElementById('add-ingredient')?.addEventListener('click', () => {
+    const container = document.getElementById('ingredients-list');
+    const row = document.createElement('div');
+    row.className = 'row g-2 mb-2 ingredient-row';
+    row.innerHTML = `
+        <div class="col-5"><input name="IngredientNames[${ingCount}]" type="text" class="form-control form-control-sm" placeholder="Ingredient name" /></div>
+        <div class="col-3"><input name="IngredientQtys[${ingCount}]" type="number" class="form-control form-control-sm" placeholder="Qty" min="0" step="0.1" /></div>
+        <div class="col-3"><select name="IngredientUnits[${ingCount}]" class="form-select form-select-sm">
+            <option>g</option><option>kg</option><option>ml</option><option>l</option>
+            <option>cup</option><option>tbsp</option><option>tsp</option><option>item</option>
+        </select></div>
+        <div class="col-1 d-flex align-items-center">
+            <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.closest('.ingredient-row').remove()">✕</button>
+        </div>`;
+    container.appendChild(row);
+    ingCount++;
+});
+
+document.getElementById('add-step')?.addEventListener('click', () => {
+    stepCount++;
+    const container = document.getElementById('steps-list');
+    const row = document.createElement('div');
+    row.className = 'd-flex gap-2 mb-2 step-row';
+    row.innerHTML = `
+        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0 step-num"
+             style="width:30px;height:30px;background:var(--orange);font-size:.8rem">${stepCount}</div>
+        <textarea name="Steps[${stepCount-1}]" class="form-control form-control-sm" rows="2" placeholder="Describe step ${stepCount}…"></textarea>
+        <button type="button" class="btn btn-sm btn-link text-danger p-0 align-self-start"
+                onclick="this.closest('.step-row').remove();renumberSteps()">✕</button>`;
+    container.appendChild(row);
+});
+
+function renumberSteps() {
+    document.querySelectorAll('.step-num').forEach((el, i) => el.textContent = i + 1);
+}
+</script>
+}

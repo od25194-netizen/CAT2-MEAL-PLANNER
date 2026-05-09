@@ -1,0 +1,294 @@
+@* ═══ Profile/Index.cshtml ═══════════════════════════════════════ *@
+@model MyMealPlanner.Core.Models.ApplicationUser
+@{
+    ViewData["Title"] = Model.FullName + "'s Profile";
+    bool isOwn        = (bool)(ViewBag.IsOwnProfile ?? false);
+    bool isFollowing  = (bool)(ViewBag.IsFollowing ?? false);
+    var recipes       = ViewBag.Recipes       as List<MyMealPlanner.Core.Models.Recipe>          ?? new();
+    var cookLogs      = ViewBag.CookLogs      as List<MyMealPlanner.Core.Models.CookLog>         ?? new();
+    var collections   = ViewBag.Collections   as List<MyMealPlanner.Core.Models.SavedCollection> ?? new();
+    var passport      = ViewBag.CuisinePassport as dynamic ?? new List<dynamic>();
+    var badges        = Model.Badges.Select(b => b.Badge).ToList();
+    var tick = Model.VerificationTick;
+}
+
+<div class="container-xl pb-5">
+    <!-- Cover -->
+    <div class="profile-cover mb-0" style="background:linear-gradient(135deg,var(--dark-2),#3D1F00)">
+        <div class="profile-avatar-wrap">
+            <div class="profile-avatar">
+                @if (!string.IsNullOrEmpty(Model.ProfilePhotoUrl))
+                { <img src="@Model.ProfilePhotoUrl" style="width:100%;height:100%;object-fit:cover" /> }
+                else
+                { @Model.FullName[0] }
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Header Card -->
+    <div class="bg-white rounded-bottom-3 shadow-sm px-4 pt-5 pb-3 mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1 class="display-font mb-0" style="font-size:1.8rem">
+                    @Model.FullName
+                    @if (tick == MyMealPlanner.Core.Enums.VerificationTick.Gold)
+                    { <span title="Grand Chef" style="color:var(--gold)">🌟</span> }
+                    else if (tick == MyMealPlanner.Core.Enums.VerificationTick.Green)
+                    { <i class="bi bi-patch-check-fill tick-green" title="Verified Chef"></i> }
+                    else if (tick == MyMealPlanner.Core.Enums.VerificationTick.White)
+                    { <i class="bi bi-patch-check-fill tick-white" title="Skilled Cook"></i> }
+                </h1>
+                <div class="text-muted small">
+                    @@<span>@(Model.UserName?.Split('@')[0])</span>
+                    @if (!string.IsNullOrEmpty(Model.CountryName)) { <span> · 🌍 @Model.CountryName</span> }
+                    @if (!string.IsNullOrEmpty(Model.CityName)) { <span> · @Model.CityName</span> }
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Bio))
+                { <p class="mt-2 mb-0" style="max-width:500px">@Model.Bio</p> }
+            </div>
+            <div class="d-flex gap-2">
+                @if (isOwn)
+                {
+                    <a asp-controller="Account" asp-action="Settings" class="btn btn-outline-orange btn-sm">
+                        <i class="bi bi-gear"></i> Settings
+                    </a>
+                }
+                else
+                {
+                    <button class="btn @(isFollowing ? "btn-orange" : "btn-outline-orange") btn-sm"
+                            id="follow-btn" data-user="@Model.Id">
+                        <i class="bi bi-person-@(isFollowing ? "dash" : "plus")"></i>
+                        @(isFollowing ? "Following" : "Follow")
+                    </button>
+                    <button class="btn btn-outline-orange btn-sm">
+                        <i class="bi bi-chat"></i> Message
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="d-flex gap-4 mt-3 pt-3 border-top flex-wrap">
+            @{
+                var stats = new[] {
+                    (Model.FollowerCount.ToString("N0"),   "Followers"),
+                    (Model.FollowingCount.ToString("N0"),  "Following"),
+                    (recipes.Count.ToString(),             "Recipes"),
+                    (cookLogs.Count.ToString(),            "Cooked"),
+                    (Model.CookStreak.ToString(),          "Day Streak 🔥"),
+                };
+            }
+            @foreach (var (val, label) in stats)
+            {
+                <div class="text-center">
+                    <div class="fw-bold">@val</div>
+                    <div class="small text-muted">@label</div>
+                </div>
+            }
+            <!-- Chef Level -->
+            <div class="ms-auto text-end">
+                <div class="small text-muted mb-1">Chef Level</div>
+                <div class="tag tag-orange">
+                    @((int)Model.ChefLevel) / 8 — @Model.ChefLevel.ToString().Replace("_"," ").Replace("Level","").Trim()
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- ══ Main Content ══════════════════════════════════════ -->
+        <div class="col-lg-8">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-4" id="profile-tabs">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-recipes">Recipes</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-logs">Cook Logs</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-collections">Cookbooks</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-badges">Badges</a></li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- Recipes -->
+                <div class="tab-pane active" id="tab-recipes">
+                    @if (recipes.Any())
+                    {
+                        <div class="row g-3">
+                            @foreach (var r in recipes)
+                            {
+                                <div class="col-6 col-md-4">
+                                    <partial name="_RecipeCard" model="r" />
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    { <div class="text-center py-5 text-muted"><i class="bi bi-book fs-1 d-block mb-2"></i>No recipes yet.</div> }
+                </div>
+
+                <!-- Cook Logs -->
+                <div class="tab-pane" id="tab-logs">
+                    @if (cookLogs.Any())
+                    {
+                        <div class="d-flex flex-column gap-3">
+                            @foreach (var log in cookLogs)
+                            {
+                                <div class="bg-white rounded-3 p-3 shadow-sm d-flex gap-3 align-items-start">
+                                    @if (!string.IsNullOrEmpty(log.PhotoUrl))
+                                    { <img src="@log.PhotoUrl" style="width:72px;height:72px;border-radius:10px;object-fit:cover" /> }
+                                    <div class="flex-grow-1">
+                                        <a asp-controller="Recipe" asp-action="Details" asp-route-id="@log.RecipeId"
+                                           class="fw-semibold text-dark">@log.Recipe?.Title</a>
+                                        <div class="small text-muted mt-1">@log.CookedAt.ToString("MMM d, yyyy")</div>
+                                        @if (!string.IsNullOrEmpty(log.Note))
+                                        { <p class="small mt-2 mb-0">@log.Note</p> }
+                                    </div>
+                                    <div class="text-warning">
+                                        @string.Concat(Enumerable.Repeat("⭐", log.Rating))
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    { <div class="text-center py-5 text-muted"><i class="bi bi-journal fs-1 d-block mb-2"></i>No cook logs yet.</div> }
+                </div>
+
+                <!-- Collections -->
+                <div class="tab-pane" id="tab-collections">
+                    @if (collections.Any())
+                    {
+                        <div class="row g-3">
+                            @foreach (var col in collections)
+                            {
+                                <div class="col-6 col-md-4">
+                                    <div class="bg-white rounded-3 shadow-sm overflow-hidden">
+                                        <div class="d-flex align-items-center justify-content-center"
+                                             style="height:100px;background:var(--orange-light);font-size:2.5rem">📚</div>
+                                        <div class="p-3">
+                                            <div class="fw-semibold">@col.Name</div>
+                                            <div class="small text-muted">@col.Items.Count recipes</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    { <div class="text-center py-5 text-muted"><i class="bi bi-collection fs-1 d-block mb-2"></i>No collections yet.</div> }
+                </div>
+
+                <!-- Badges -->
+                <div class="tab-pane" id="tab-badges">
+                    @if (badges.Any())
+                    {
+                        <div class="row g-3">
+                            @foreach (var badge in badges)
+                            {
+                                <div class="col-4 col-md-3 text-center">
+                                    <div class="p-3 bg-white rounded-3 shadow-sm">
+                                        <div style="font-size:2.5rem">@badge.IconUrl</div>
+                                        <div class="fw-semibold small mt-2">@badge.Name</div>
+                                        <div class="text-muted" style="font-size:.72rem">@badge.Description</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    { <div class="text-center py-5 text-muted"><i class="bi bi-award fs-1 d-block mb-2"></i>No badges yet — keep cooking!</div> }
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ Sidebar ═══════════════════════════════════════════ -->
+        <div class="col-lg-4">
+            <!-- Pets -->
+            @if (Model.Pets.Any())
+            {
+                <div class="bg-white rounded-3 shadow-sm p-4 mb-4">
+                    <h6 class="fw-bold mb-3">🐾 Pets</h6>
+                    @foreach (var pet in Model.Pets)
+                    {
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle"
+                                 style="width:44px;height:44px;background:var(--orange-light);font-size:1.5rem;flex-shrink:0">
+                                @(pet.Type switch { MyMealPlanner.Core.Enums.PetType.Dog=>"🐕", MyMealPlanner.Core.Enums.PetType.Cat=>"🐈", MyMealPlanner.Core.Enums.PetType.Bird=>"🐦", MyMealPlanner.Core.Enums.PetType.Fish=>"🐠", _=>"🐾" })
+                            </div>
+                            <div>
+                                <div class="fw-semibold">@pet.PetName</div>
+                                <div class="small text-muted">@pet.Type @(pet.Breed != null ? "· " + pet.Breed : "") · @pet.AgeYears yrs</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Cuisine Passport -->
+            <div class="passport-card mb-4">
+                <h6 class="fw-bold mb-3">🌍 Cuisine Passport</h6>
+                @if (cookLogs.Any())
+                {
+                    <p class="small text-muted mb-3">
+                        Cooked dishes from <strong>@cookLogs.Select(l => l.Recipe?.OriginCountry).Distinct().Count()</strong> countries
+                    </p>
+                    @foreach (var log in cookLogs.Where(l => l.Recipe?.OriginCountry != null)
+                                                  .GroupBy(l => l.Recipe!.OriginCountry)
+                                                  .OrderByDescending(g => g.Count())
+                                                  .Take(6))
+                    {
+                        var maxCooks = cookLogs.GroupBy(l => l.Recipe?.OriginCountry).Max(g => g.Count());
+                        var pct = maxCooks > 0 ? (double)log.Count() / maxCooks * 100 : 0;
+                        <div class="passport-country-row">
+                            <div style="width:100px;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                                @log.Key
+                            </div>
+                            <div class="passport-bar">
+                                <div class="passport-bar-fill" style="width:@pct%"></div>
+                            </div>
+                            <div class="small text-muted" style="width:30px;text-align:right">@log.Count()</div>
+                        </div>
+                    }
+                }
+                else
+                { <p class="small text-muted">Start cooking to fill your passport! 🍽️</p> }
+            </div>
+
+            <!-- Level Progress -->
+            @if (isOwn)
+            {
+                <div class="bg-white rounded-3 shadow-sm p-4 mb-4">
+                    <h6 class="fw-bold mb-3">📈 Your Level</h6>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small">Level @((int)Model.ChefLevel)</span>
+                        <span class="small">Level @((int)Model.ChefLevel + 1)</span>
+                    </div>
+                    <div class="level-bar mb-2">
+                        <div class="level-bar-fill" style="width:@((int)Model.ChefLevel * 12.5)%"></div>
+                    </div>
+                    <div class="small text-muted">
+                        @Model.ChefLevel.ToString().Replace("_"," ") · @Model.TotalPoints.ToString("N0") points
+                    </div>
+                    <a asp-controller="Quiz" asp-action="Index" class="btn btn-orange btn-sm w-100 mt-3">
+                        Take Quiz to Level Up 🚀
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.getElementById('follow-btn')?.addEventListener('click', async function() {
+    const userId = this.dataset.user;
+    const resp = await fetch('/Profile/Follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': document.querySelector('[name=__RequestVerificationToken]')?.value || '' },
+        body: 'targetUserId=' + userId
+    });
+    const data = await resp.json();
+    this.className = `btn ${data.following ? 'btn-orange' : 'btn-outline-orange'} btn-sm`;
+    this.innerHTML = `<i class="bi bi-person-${data.following ? 'dash' : 'plus'}"></i> ${data.following ? 'Following' : 'Follow'}`;
+});
+</script>
+@Html.AntiForgeryToken()
+}

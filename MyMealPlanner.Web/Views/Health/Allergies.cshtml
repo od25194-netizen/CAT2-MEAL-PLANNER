@@ -1,0 +1,149 @@
+@* ═══ Health/Allergies.cshtml ══════════════════════════════════ *@
+@using MyMealPlanner.Core.Enums
+@{
+    ViewData["Title"] = "Allergy Guide";
+    var allGuides    = ViewBag.AllGuides as List<MyMealPlanner.Core.Models.AllergyGuide> ?? new();
+    var selected     = ViewBag.SelectedGuide as MyMealPlanner.Core.Models.AllergyGuide;
+
+    var allergenEmoji = new Dictionary<AllergenType, string> {
+        [AllergenType.Peanuts]   = "🥜", [AllergenType.TreeNuts]  = "🌰",
+        [AllergenType.Milk]      = "🥛", [AllergenType.Eggs]      = "🥚",
+        [AllergenType.Wheat]     = "🌾", [AllergenType.Gluten]    = "🍞",
+        [AllergenType.Soy]       = "🫘", [AllergenType.Fish]      = "🐟",
+        [AllergenType.Shellfish] = "🦐", [AllergenType.Sesame]    = "🌱",
+        [AllergenType.Mustard]   = "🟡", [AllergenType.Celery]    = "🥬",
+    };
+}
+
+<div class="container-xl py-4">
+    <h1 class="section-heading">🛡️ Allergy Safety Guide</h1>
+    <p class="text-muted mb-5">
+        Know your allergens. Detect hidden sources. React safely.
+        <em>Always consult a doctor for personal allergy management.</em>
+    </p>
+
+    <!-- Allergen Pills -->
+    <div class="d-flex flex-wrap gap-2 mb-5">
+        @foreach (var guide in allGuides)
+        {
+            var emoji = allergenEmoji.GetValueOrDefault(guide.AllergenType, "⚠️");
+            var active = selected?.AllergenType == guide.AllergenType;
+            <a asp-action="Allergies" asp-route-type="@guide.AllergenType"
+               class="tag @(active ? "tag-orange" : "tag-country")"
+               style="font-size:.9rem;padding:.4rem .9rem;cursor:pointer">
+                @emoji @guide.AllergenType
+                @if (guide.DefaultRisk == AllergenRisk.Critical)
+                { <span class="ms-1 tag tag-red" style="font-size:.68rem;padding:.1rem .4rem">CRITICAL</span> }
+            </a>
+        }
+    </div>
+
+    @if (selected != null)
+    {
+        var emoji = allergenEmoji.GetValueOrDefault(selected.AllergenType, "⚠️");
+        var riskColor = selected.DefaultRisk switch {
+            AllergenRisk.Critical => "var(--red)", AllergenRisk.High => "#E8630A",
+            AllergenRisk.Moderate => "var(--gold)", _ => "var(--green)"
+        };
+
+        <div class="fade-up">
+            <!-- Alert Banner -->
+            <div class="allergy-alert @(selected.DefaultRisk == AllergenRisk.Critical ? "critical" : "") mb-4">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <span style="font-size:2.5rem">@emoji</span>
+                    <div>
+                        <h2 class="mb-0 display-font">@selected.AllergenType Allergy</h2>
+                        <span class="allergy-badge allergy-badge-@selected.DefaultRisk.ToString().ToLower()">
+                            @selected.DefaultRisk Risk
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Symptoms -->
+                <div class="col-md-6">
+                    <div class="bg-white rounded-3 shadow-sm p-4 h-100">
+                        <h5 class="fw-bold mb-3">⚠️ Symptoms</h5>
+                        <div class="mb-3">
+                            <div class="tag tag-orange mb-2">Mild</div>
+                            <p>@selected.MildSymptoms</p>
+                        </div>
+                        <div>
+                            <div class="tag tag-red mb-2">Severe</div>
+                            <p class="mb-0">@selected.SevereSymptoms</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- First Response -->
+                <div class="col-md-6">
+                    <div class="rounded-3 p-4 h-100"
+                         style="background:@(selected.DefaultRisk == AllergenRisk.Critical ? "#FFF0F0" : "var(--light)")">
+                        <h5 class="fw-bold mb-3">🚨 First Response</h5>
+                        <p class="fw-semibold" style="color:@riskColor">@selected.FirstResponse</p>
+                        <p class="small text-muted">
+                            ⚠️ This is general guidance only.
+                            If you have a known severe allergy, always carry your prescribed medication
+                            and consult your doctor for a personalised emergency plan.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Hidden Sources -->
+                @{
+                    var hiddenSources = string.IsNullOrEmpty(selected.HiddenSourcesJson) ? new List<string>()
+                        : System.Text.Json.JsonSerializer.Deserialize<List<string>>(selected.HiddenSourcesJson) ?? new();
+                }
+                @if (hiddenSources.Any())
+                {
+                    <div class="col-md-6">
+                        <div class="bg-white rounded-3 shadow-sm p-4 h-100">
+                            <h5 class="fw-bold mb-3">🔍 Hidden Sources</h5>
+                            <p class="small text-muted mb-3">
+                                These common ingredients may contain @selected.AllergenType without being obvious:
+                            </p>
+                            @foreach (var source in hiddenSources)
+                            {
+                                <div class="d-flex align-items-center gap-2 py-2 border-bottom">
+                                    <i class="bi bi-exclamation-diamond text-orange"></i>
+                                    <span>@source</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Safe Substitutes -->
+                @{
+                    var substitutes = string.IsNullOrEmpty(selected.SafeSubstitutesJson) ? new List<string>()
+                        : System.Text.Json.JsonSerializer.Deserialize<List<string>>(selected.SafeSubstitutesJson) ?? new();
+                }
+                @if (substitutes.Any())
+                {
+                    <div class="col-md-6">
+                        <div class="bg-white rounded-3 shadow-sm p-4 h-100"
+                             style="border-top:3px solid var(--green)">
+                            <h5 class="fw-bold mb-3">✅ Safe Substitutes</h5>
+                            @foreach (var sub in substitutes)
+                            {
+                                <div class="d-flex align-items-center gap-2 py-2 border-bottom">
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                    <span>@sub</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div style="font-size:4rem">🛡️</div>
+            <h3 class="display-font mt-3">Select an Allergen</h3>
+            <p class="text-muted">Click any allergen above to see symptoms, hidden sources, and safe substitutes.</p>
+        </div>
+    }
+</div>

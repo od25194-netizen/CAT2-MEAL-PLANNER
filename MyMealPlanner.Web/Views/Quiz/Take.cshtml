@@ -1,0 +1,128 @@
+@* ═══ Quiz/Take.cshtml ══════════════════════════════════════════ *@
+@model List<MyMealPlanner.Core.Models.QuizQuestion>
+@using MyMealPlanner.Core.Enums
+@{
+    ViewData["Title"] = "Quiz Time!";
+    var targetLevel = (ChefLevel)(ViewBag.TargetLevel ?? ChefLevel.Level2_CuriousCook);
+    var threshold   = (int)targetLevel >= 6 ? 90 : 80;
+}
+
+<div class="container py-5" style="max-width:700px">
+    <div class="text-center mb-4">
+        <div style="font-size:2.5rem">📝</div>
+        <h1 class="display-font">Level @((int)targetLevel) Quiz</h1>
+        <p class="text-muted">
+            @Model.Count questions · Score @threshold%+ to level up · Personalised to your food history
+        </p>
+        <div class="level-bar" style="max-width:200px;margin:0 auto">
+            <div class="level-bar-fill" id="progress-bar" style="width:0%;transition:width .4s"></div>
+        </div>
+        <div class="small text-muted mt-1">
+            <span id="progress-text">0</span> / @Model.Count answered
+        </div>
+    </div>
+
+    <form asp-action="Submit" method="post" id="quiz-form">
+        @Html.AntiForgeryToken()
+
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            var q = Model[i];
+            <div class="quiz-card mb-4 fade-up" id="q-@i" data-question-index="@i">
+                <!-- Question number + difficulty -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="tag tag-orange">Question @(i+1) of @Model.Count</span>
+                    <span class="tag @(q.Difficulty <= DifficultyLevel.Easy ? "tag-green" : q.Difficulty == DifficultyLevel.Intermediate ? "tag-blue" : "tag-red")">
+                        @q.Difficulty
+                    </span>
+                </div>
+
+                <!-- Question -->
+                <p class="fw-semibold mb-3" style="font-size:1.05rem;line-height:1.5">
+                    @q.QuestionText
+                </p>
+
+                <!-- Image (if any) -->
+                @if (!string.IsNullOrEmpty(q.ImageUrl))
+                {
+                    <img src="@q.ImageUrl" alt="Question image"
+                         class="img-fluid rounded-3 mb-3"
+                         style="max-height:200px;object-fit:cover" />
+                }
+
+                <!-- Hidden answer input -->
+                <input type="hidden" name="answers[@q.Id]" id="answer-@q.Id" />
+
+                <!-- Answer options -->
+                @{
+                    var answers = System.Text.Json.JsonSerializer.Deserialize<List<string>>(q.AnswersJson) ?? new();
+                }
+                <div data-question="@q.Id">
+                    @foreach (var answer in answers)
+                    {
+                        <div class="quiz-option" data-value="@answer"
+                             onclick="selectAnswer(this, '@q.Id')">
+                            @answer
+                        </div>
+                    }
+                </div>
+
+                @if (q.QuestionType == QuizQuestionType.TrueOrFalse && !answers.Any())
+                {
+                    <div data-question="@q.Id">
+                        <div class="quiz-option" data-value="True"
+                             onclick="selectAnswer(this, '@q.Id')">✅ True</div>
+                        <div class="quiz-option" data-value="False"
+                             onclick="selectAnswer(this, '@q.Id')">❌ False</div>
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-orange btn-lg px-5" id="submit-btn" disabled>
+                Submit Quiz 🚀
+            </button>
+            <p class="small text-muted mt-2">
+                Answer all @Model.Count questions to submit.
+                You have one attempt — take your time!
+            </p>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+let answered = 0;
+const total  = @Model.Count;
+
+function selectAnswer(el, questionId) {
+    const group = el.closest('[data-question]');
+    const wasSelected = el.classList.contains('selected');
+
+    group.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+    if (!wasSelected) {
+        el.classList.add('selected');
+        document.getElementById('answer-' + questionId).value = el.dataset.value;
+
+        // Update progress
+        const inputs = document.querySelectorAll('[name^="answers"]');
+        const filled = [...inputs].filter(i => i.value).length;
+        answered = filled;
+
+        const pct = (filled / total * 100).toFixed(0);
+        document.getElementById('progress-bar').style.width = pct + '%';
+        document.getElementById('progress-text').textContent = filled;
+        document.getElementById('submit-btn').disabled = filled < total;
+    }
+}
+
+// Warn before leaving
+window.addEventListener('beforeunload', e => {
+    if (answered > 0 && answered < total) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+</script>
+}

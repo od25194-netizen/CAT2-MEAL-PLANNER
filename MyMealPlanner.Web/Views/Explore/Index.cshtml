@@ -1,0 +1,127 @@
+@* ═══ Explore/Index.cshtml ═══════════════════════════════════════ *@
+@using MyMealPlanner.Core.Enums
+@{
+    ViewData["Title"] = "Explore Global Cuisine";
+    var topGlobal    = ViewBag.TopGlobal    as List<MyMealPlanner.Core.Models.DishRanking> ?? new();
+    var topWeekly    = ViewBag.TopWeekly    as List<MyMealPlanner.Core.Models.DishRanking> ?? new();
+    var topContinent = ViewBag.TopContinent as List<MyMealPlanner.Core.Models.DishRanking> ?? new();
+    var topCountry   = ViewBag.TopCountry   as List<MyMealPlanner.Core.Models.DishRanking> ?? new();
+    var cultures     = ViewBag.Cultures as dynamic ?? new List<dynamic>();
+}
+
+<div class="container-xl py-4">
+    <h1 class="display-font mb-1">🌍 Explore Global Cuisine</h1>
+    <p class="text-muted mb-5">Discover ranked dishes across every culture, country and continent.</p>
+
+    <!-- Ranking Scope Tabs -->
+    <ul class="nav nav-tabs mb-4" id="explore-tabs">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-global">🌐 Global Top 10</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-weekly">🔥 This Week</a></li>
+        @if (topCountry.Any())
+        {
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-country">🏳️ My Country</a></li>
+        }
+    </ul>
+
+    <div class="tab-content">
+        <!-- Global -->
+        <div class="tab-pane active" id="tab-global">
+            <div class="bg-white rounded-3 shadow-sm p-3">
+                @foreach (var r in topGlobal)
+                {
+                    <div class="ranking-row">
+                        <div class="rank-badge @(r.RankPosition <= 3 ? $"rank-{r.RankPosition}" : "rank-n")">
+                            @r.RankPosition
+                        </div>
+                        @if (r.Recipe?.CoverImageUrl != null)
+                        {
+                            <img src="@r.Recipe.CoverImageUrl" alt=""
+                                 style="width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0" />
+                        }
+                        <div class="flex-grow-1">
+                            <a asp-controller="Recipe" asp-action="Details"
+                               asp-route-id="@r.Recipe?.Id" asp-route-slug="@r.Recipe?.Slug"
+                               class="fw-semibold text-dark d-block">@r.Recipe?.Title</a>
+                            <div class="d-flex gap-2 flex-wrap mt-1">
+                                @if (r.Recipe?.OriginCountry != null)
+                                { <span class="tag tag-country" style="font-size:.72rem">🌍 @r.Recipe.OriginCountry</span> }
+                                @if (r.Recipe?.MealType != null)
+                                { <span class="tag tag-country" style="font-size:.72rem">@r.Recipe.MealType</span> }
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small fw-bold">@r.Recipe?.LikeCount.ToString("N0") ❤️</div>
+                            @if (r.WeeklyTrend > 0)
+                            { <div class="rank-trend-up small"><i class="bi bi-arrow-up"></i>@r.WeeklyTrend</div> }
+                            else if (r.WeeklyTrend < 0)
+                            { <div class="rank-trend-down small"><i class="bi bi-arrow-down"></i>@Math.Abs(r.WeeklyTrend)</div> }
+                        </div>
+                    </div>
+                }
+                <div class="text-center mt-3">
+                    <a asp-action="Rankings" asp-route-scope="Global" class="btn btn-outline-orange btn-sm">
+                        Full Global Rankings →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly -->
+        <div class="tab-pane" id="tab-weekly">
+            <div class="bg-white rounded-3 shadow-sm p-3">
+                @foreach (var r in topWeekly)
+                {
+                    <div class="ranking-row">
+                        <div class="rank-badge @(r.RankPosition <= 3 ? $"rank-{r.RankPosition}" : "rank-n")">@r.RankPosition</div>
+                        <div class="flex-grow-1">
+                            <a asp-controller="Recipe" asp-action="Details"
+                               asp-route-id="@r.Recipe?.Id" asp-route-slug="@r.Recipe?.Slug"
+                               class="fw-semibold text-dark">@r.Recipe?.Title</a>
+                            <div class="small text-muted">@r.Recipe?.OriginCountry</div>
+                        </div>
+                        <div class="rank-trend-up small"><i class="bi bi-fire"></i> Trending</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Country -->
+        @if (topCountry.Any())
+        {
+            <div class="tab-pane" id="tab-country">
+                <div class="bg-white rounded-3 shadow-sm p-3">
+                    @foreach (var r in topCountry)
+                    {
+                        <div class="ranking-row">
+                            <div class="rank-badge @(r.RankPosition <= 3 ? $"rank-{r.RankPosition}" : "rank-n")">@r.RankPosition</div>
+                            <div class="flex-grow-1">
+                                <a asp-controller="Recipe" asp-action="Details"
+                                   asp-route-id="@r.Recipe?.Id" asp-route-slug="@r.Recipe?.Slug"
+                                   class="fw-semibold text-dark">@r.Recipe?.Title</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Cultural Categories -->
+    <h2 class="section-heading mt-5 mb-4">🎭 Browse by Culture</h2>
+    <div class="row g-2">
+        @foreach (var culture in cultures)
+        {
+            <div class="col-6 col-md-3 col-lg-2">
+                <a asp-controller="Recipe" asp-action="Index"
+                   asp-route-culture="@culture.Culture"
+                   class="text-decoration-none d-block p-3 rounded-3 text-center"
+                   style="background:var(--white);box-shadow:var(--shadow-sm);transition:.2s"
+                   onmouseover="this.style.background='var(--orange-light)'"
+                   onmouseout="this.style.background='var(--white)'">
+                    <div class="fw-semibold small">@culture.Culture</div>
+                    <div class="text-muted" style="font-size:.75rem">@culture.Count recipes</div>
+                </a>
+            </div>
+        }
+    </div>
+</div>

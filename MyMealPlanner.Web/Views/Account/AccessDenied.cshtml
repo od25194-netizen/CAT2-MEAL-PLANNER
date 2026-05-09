@@ -1,0 +1,27 @@
+@* ══ Account/AccessDenied.cshtml ════════════════════════════════ *@
+@{ ViewData["Title"] = "Access Denied"; }
+
+<div class="container py-5 text-center" style="max-width:520px">
+    <div style="font-size:5rem">🔒</div>
+    <h1 class="display-font mt-3">Access Denied</h1>
+    <p class="text-muted mt-2 mb-4">
+        You don't have permission to view this page.
+        This area requires a higher chef level or a specific role.
+    </p>
+    <div class="p-4 rounded-3 mb-4" style="background:var(--orange-light)">
+        <p class="mb-2 small fw-semibold">How to unlock this area:</p>
+        <ul class="list-unstyled small text-muted mb-0">
+            <li>📝 Take quizzes to level up your Chef Rank</li>
+            <li>🍳 Log more cooks to earn points</li>
+            <li>💡 Submit recipes to become a Contributor</li>
+        </ul>
+    </div>
+    <div class="d-flex gap-3 justify-content-center">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-orange px-4">
+            <i class="bi bi-house-fill me-2"></i>Go Home
+        </a>
+        <a asp-controller="Quiz" asp-action="Index" class="btn btn-outline-orange px-4">
+            <i class="bi bi-mortarboard me-2"></i>Level Up
+        </a>
+    </div>
+</div>

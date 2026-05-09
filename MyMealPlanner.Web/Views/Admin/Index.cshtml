@@ -1,0 +1,81 @@
+@* ═══ Admin/Index.cshtml ═══════════════════════════════════════ *@
+@{ ViewData["Title"] = "Admin Dashboard"; }
+
+<div class="container-xl py-4">
+    <h1 class="display-font mb-1">Admin Dashboard</h1>
+    <p class="text-muted mb-4">Platform overview — My Meal Planner</p>
+
+    <!-- Stat cards -->
+    <div class="row g-3 mb-5">
+        @{
+            var cards = new[] {
+                ("👥", ViewBag.TotalUsers?.ToString("N0") ?? "—",    "Total Users",          "var(--orange)"),
+                ("🍽️", ViewBag.TotalRecipes?.ToString("N0") ?? "—",  "Published Recipes",    "var(--blue)"),
+                ("📋", ViewBag.PendingSuggest?.ToString() ?? "—",    "Pending Suggestions",  "var(--gold)"),
+                ("🕷️", ViewBag.TodayScrapes?.ToString("N0") ?? "—", "Scraped Today",         "var(--green)"),
+                ("⏳", ViewBag.UnpublishedCount?.ToString() ?? "—",  "Awaiting Review",       "var(--red)"),
+                ("🔧", ViewBag.ActiveJobs?.ToString() ?? "—",        "Active Scrape Jobs",   "#7C3AED"),
+                ("🆕", ViewBag.NewUsersToday?.ToString() ?? "—",     "New Users Today",      "var(--orange)"),
+                ("🍳", ViewBag.TotalCookLogs?.ToString("N0") ?? "—", "Total Cook Logs",      "var(--green)"),
+            };
+        }
+        @foreach (var (icon, val, label, color) in cards)
+        {
+            <div class="col-6 col-md-3">
+                <div class="stat-card" style="border-top-color:@color">
+                    <div style="font-size:1.8rem">@icon</div>
+                    <div class="stat-value mt-2">@val</div>
+                    <div class="stat-label">@label</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-3 mb-5">
+        @{
+            var actions = new[] {
+                ("Review Suggestions",    "bi-lightbulb",   "Suggestions",      "Index",    "btn-orange"),
+                ("Recipe Review Queue",   "bi-eye",         "Admin",            "ReviewQueue","btn-outline-orange"),
+                ("Manage Users",          "bi-people",      "Admin",            "Users",     "btn-outline-orange"),
+                ("Scraper Monitor",       "bi-activity",    "Admin",            "ScraperMonitor","btn-outline-orange"),
+                ("Hangfire Jobs",         "bi-gear-wide",   "",                 "",          "btn-outline-orange"),
+            };
+        }
+        @foreach (var (label, icon, ctrl, action, btnClass) in actions)
+        {
+            <div class="col-6 col-md-2">
+                <a asp-controller="@ctrl" asp-action="@action"
+                   class="btn @btnClass w-100 d-flex flex-column align-items-center gap-1 py-3">
+                    <i class="bi @icon fs-4"></i>
+                    <span class="small">@label</span>
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- Continent Breakdown -->
+    @{
+        var continentStats = ViewBag.ContinentStats as IEnumerable<dynamic>;
+    }
+    @if (continentStats != null)
+    {
+        <div class="bg-white rounded-3 shadow-sm p-4">
+            <h5 class="fw-bold mb-4">🌍 Recipes by Continent</h5>
+            @{
+                var maxCount = ((IEnumerable<dynamic>)continentStats).Max(c => (int)c.Count);
+            }
+            @foreach (var stat in continentStats)
+            {
+                var pct = maxCount > 0 ? (double)stat.Count / maxCount * 100 : 0;
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div style="width:120px;font-size:.9rem">@stat.Continent</div>
+                    <div class="flex-grow-1 level-bar">
+                        <div class="level-bar-fill" style="width:@pct%"></div>
+                    </div>
+                    <div class="small fw-semibold" style="width:50px;text-align:right">@stat.Count</div>
+                </div>
+            }
+        </div>
+    }
+</div>

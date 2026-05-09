@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>You're Offline — My Meal Planner</title>
+    <style>
+        body { margin:0; font-family:'DM Sans',system-ui,sans-serif;
+               background:#F8F4EF; color:#1A1A2E;
+               display:flex; align-items:center; justify-content:center;
+               min-height:100vh; text-align:center; padding:2rem; }
+        .card { background:white; border-radius:20px; padding:3rem 2rem;
+                box-shadow:0 8px 32px rgba(0,0,0,.1); max-width:480px; width:100%; }
+        h1 { font-family:'Georgia',serif; font-size:2rem; margin:.5rem 0; }
+        p  { color:#6B7280; margin-bottom:1.5rem; }
+        .btn { display:inline-block; background:#E8630A; color:white;
+               padding:.75rem 2rem; border-radius:50px; text-decoration:none;
+               font-weight:600; margin:.25rem; }
+        .btn-outline { background:transparent; color:#E8630A;
+                       border:2px solid #E8630A; }
+        .icon { font-size:5rem; margin-bottom:1rem; }
+        .tip { background:#FFF0E6; border-radius:12px; padding:1rem;
+               font-size:.9rem; color:#C05008; margin-top:1.5rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">🍳</div>
+        <h1>You're Offline</h1>
+        <p>
+            No internet connection detected. Previously saved recipes
+            are still available below.
+        </p>
+        <a href="/" class="btn">Try Again</a>
+        <a href="/Recipe" class="btn btn-outline">Saved Recipes</a>
+        <div class="tip">
+            💡 <strong>Tip:</strong> Save recipes to your cookbook while online —
+            they'll be available here when you're offline.
+        </div>
+    </div>
+    <script>
+        // Auto-reload when connection is restored
+        window.addEventListener('online', () => location.reload());
+    </script>
+</body>
+</html>

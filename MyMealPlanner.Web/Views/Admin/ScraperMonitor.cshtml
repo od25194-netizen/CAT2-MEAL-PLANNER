@@ -1,0 +1,114 @@
+@* ══ Admin/ScraperMonitor.cshtml ═════════════════════════════════ *@
+@model List<MyMealPlanner.Core.Models.ScrapeJob>
+@using MyMealPlanner.Core.Enums
+@{ ViewData["Title"] = "Scraper Monitor"; }
+
+<div class="container-xl py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h1 class="display-font mb-0">🕷️ Scraper Monitor</h1>
+            <p class="text-muted mb-0 small mt-1">
+                Scraped in last 24 hours: <strong>@ViewBag.RecentRawCount</strong> raw items
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-orange btn-sm">← Dashboard</a>
+            <a href="/admin/jobs" target="_blank" class="btn btn-orange btn-sm">
+                <i class="bi bi-gear-wide-connected"></i> Hangfire Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Overview -->
+    @{
+        var completed = Model.Count(j => j.Status == ScrapeStatus.Completed);
+        var failed    = Model.Count(j => j.Status == ScrapeStatus.Failed);
+        var pending   = Model.Count(j => j.Status == ScrapeStatus.Pending);
+        var running   = Model.Count(j => j.Status == ScrapeStatus.Running);
+    }
+    <div class="row g-3 mb-4">
+        @{
+            var statusCards = new[] {
+                (completed.ToString(), "Completed",  "var(--green)",  "bi-check-circle-fill"),
+                (running.ToString(),   "Running",    "var(--blue)",   "bi-arrow-repeat"),
+                (pending.ToString(),   "Pending",    "var(--gold)",   "bi-clock-fill"),
+                (failed.ToString(),    "Failed",     "var(--red)",    "bi-x-circle-fill"),
+            };
+        }
+        @foreach (var (val, label, color, icon) in statusCards)
+        {
+            <div class="col-6 col-md-3">
+                <div class="bg-white rounded-3 shadow-sm p-3 d-flex align-items-center gap-3">
+                    <i class="bi @icon fs-2" style="color:@color"></i>
+                    <div>
+                        <div class="fw-bold fs-4">@val</div>
+                        <div class="small text-muted">@label</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Jobs Table -->
+    <div class="bg-white rounded-3 shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead style="background:var(--dark);color:white">
+                    <tr>
+                        <th class="py-3 px-4">Source</th>
+                        <th>Platform</th>
+                        <th>Status</th>
+                        <th>Found</th>
+                        <th>Added</th>
+                        <th>Last Run</th>
+                        <th>Next Run</th>
+                        <th>Active</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var job in Model.OrderByDescending(j => j.LastRunAt))
+                    {
+                        var statusColor = job.Status switch {
+                            ScrapeStatus.Completed => "var(--green)",
+                            ScrapeStatus.Running   => "var(--blue)",
+                            ScrapeStatus.Failed    => "var(--red)",
+                            ScrapeStatus.Pending   => "var(--gold)",
+                            _ => "var(--mid)"
+                        };
+                        <tr>
+                            <td class="px-4 py-3">
+                                <div class="fw-semibold small">@job.Source</div>
+                                <div class="text-muted" style="font-size:.72rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                                    @job.Url
+                                </div>
+                                @if (!string.IsNullOrEmpty(job.ErrorMessage))
+                                {
+                                    <div class="small text-danger mt-1">⚠️ @job.ErrorMessage</div>
+                                }
+                            </td>
+                            <td><span class="tag tag-country" style="font-size:.72rem">@job.Platform</span></td>
+                            <td>
+                                <span class="fw-semibold small" style="color:@statusColor">
+                                    @job.Status
+                                </span>
+                            </td>
+                            <td class="small fw-bold">@job.RecipesFound</td>
+                            <td class="small fw-bold text-success">@job.RecipesAdded</td>
+                            <td class="small text-muted">@job.LastRunAt.ToString("MMM d HH:mm")</td>
+                            <td class="small text-muted">
+                                @(job.NextRunAt > DateTime.UtcNow
+                                    ? job.NextRunAt.ToString("MMM d HH:mm")
+                                    : "Overdue")
+                            </td>
+                            <td>
+                                <span class="tag @(job.IsActive ? "tag-green" : "tag-red")" style="font-size:.7rem">
+                                    @(job.IsActive ? "Active" : "Paused")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName"
+      data-bs-theme="@(ViewBag.DarkMode == true ? "dark" : "light")"
+      id="html-root">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="My Meal Planner — Discover recipes from every culture, track your nutrition, plan your meals and level up your cooking skills." />
+    <meta name="theme-color" content="#E8630A" />
+
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " — My Meal Planner" : "My Meal Planner 🍽️")</title>
+
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="My Meal Planner" />
+    <!-- App Styles -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TOP NAV -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<nav class="navbar navbar-expand-lg navbar-main sticky-top" id="main-nav">
+    <div class="container-xl">
+
+        <!-- Brand -->
+        <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+            <span class="brand-icon">🍽️</span>
+            <span class="brand-text">My <strong>Meal</strong> Planner</span>
+        </a>
+
+        <!-- Mobile toggle -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarMain" aria-expanded="false">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarMain">
+
+            <!-- Centre: Discovery scope switcher -->
+            <div class="mx-auto d-none d-lg-flex scope-switcher" id="scope-bar">
+                <a class="scope-btn @(ViewBag.Scope?.ToString() == "Local" ? "active" : "")"
+                   href="/Recipe?scope=Local">
+                    <i class="bi bi-geo-alt-fill"></i> My Area
+                </a>
+                <a class="scope-btn @(ViewBag.Scope?.ToString() == "Country" ? "active" : "")"
+                   href="/Recipe?scope=Country">
+                    <i class="bi bi-flag-fill"></i> My Country
+                </a>
+                <a class="scope-btn @(ViewBag.Scope?.ToString() == "Global" ? "active" : "")"
+                   href="/Recipe?scope=Global">
+                    <i class="bi bi-globe2"></i> World
+                </a>
+            </div>
+
+            <!-- Right: Search + Actions -->
+            <ul class="navbar-nav ms-auto align-items-center gap-1">
+
+                <!-- Global Search -->
+                <li class="nav-item me-2">
+                    <button class="btn btn-search" id="search-toggle" aria-label="Search">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </li>
+
+                <!-- Explore -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle fw-medium" href="#"
+                       data-bs-toggle="dropdown">
+                        <i class="bi bi-compass"></i> Explore
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-rich">
+                        <li><a class="dropdown-item" asp-controller="Explore" asp-action="Index">
+                            <i class="bi bi-globe2 text-primary"></i> Cultural Explorer</a></li>
+                        <li><a class="dropdown-item" asp-controller="Explore" asp-action="Rankings">
+                            <i class="bi bi-trophy text-warning"></i> Rankings</a></li>
+                        <li><a class="dropdown-item" asp-controller="Explore" asp-action="CulturalMap">
+                            <i class="bi bi-map text-success"></i> World Food Map</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" asp-controller="Recipe" asp-action="Index"
+                               asp-route-scope="Country">
+                            <i class="bi bi-flag text-orange"></i> My Country's Food</a></li>
+                    </ul>
+                </li>
+
+                <!-- Eat Healthy -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle fw-medium" href="#"
+                       data-bs-toggle="dropdown">
+                        <i class="bi bi-heart-pulse"></i> Health
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-rich">
+                        <li><a class="dropdown-item" asp-controller="Health" asp-action="Nutrients">
+                            <i class="bi bi-egg-fried text-warning"></i> Nutrient Navigator</a></li>
+                        <li><a class="dropdown-item" asp-controller="Health" asp-action="Allergies">
+                            <i class="bi bi-shield-exclamation text-danger"></i> Allergy Guide</a></li>
+                        <li><a class="dropdown-item" asp-controller="Health" asp-action="FoodAsMedicine">
+                            <i class="bi bi-capsule text-success"></i> Food as Medicine</a></li>
+                        <li><a class="dropdown-item" asp-controller="Health" asp-action="WhenToEat">
+                            <i class="bi bi-clock text-info"></i> When To Eat</a></li>
+                        <li><a class="dropdown-item" asp-controller="Health" asp-action="Workout">
+                            <i class="bi bi-lightning-charge text-purple"></i> Workout + Food</a></li>
+                        <li><a class="dropdown-item" asp-controller="Health" asp-action="ObesityFighter">
+                            <i class="bi bi-heart text-pink"></i> Obesity Fighter</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" asp-controller="Health" asp-action="Pets">
+                            <i class="bi bi-emoji-smile text-orange"></i> Pet Cuisine</a></li>
+                    </ul>
+                </li>
+
+                <!-- Jokes -->
+                <li class="nav-item">
+                    <a class="nav-link fw-medium" asp-controller="Jokes" asp-action="Index">
+                        <i class="bi bi-emoji-laughing"></i>
+                        <span class="d-none d-xl-inline">Jokes</span>
+                    </a>
+                </li>
+
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <!-- Notifications -->
+                    <li class="nav-item">
+                        <button class="btn btn-icon position-relative" id="notif-toggle">
+                            <i class="bi bi-bell"></i>
+                            <span class="badge-dot" id="notif-badge" style="display:none"></span>
+                        </button>
+                    </li>
+
+                    <!-- Meal Planner -->
+                    <li class="nav-item">
+                        <a class="nav-link fw-medium" asp-controller="MealPlan" asp-action="Index">
+                            <i class="bi bi-calendar-week"></i>
+                            <span class="d-none d-xl-inline">Plan</span>
+                        </a>
+                    </li>
+
+                    <!-- Quiz -->
+                    <li class="nav-item">
+                        <a class="nav-link fw-medium" asp-controller="Quiz" asp-action="Index">
+                            <i class="bi bi-mortarboard"></i>
+                            <span class="d-none d-xl-inline">Level Up</span>
+                        </a>
+                    </li>
+
+                    <!-- User Menu -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle p-0" href="#" data-bs-toggle="dropdown">
+                            <div class="avatar-sm" id="nav-avatar">
+                                @User.Identity!.Name?[0]
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-rich">
+                            <li class="px-3 py-2 border-bottom">
+                                <div class="fw-semibold small">@User.Identity.Name</div>
+                                <div class="text-muted" style="font-size:.75rem">
+                                    @Html.Raw(User.FindFirst("ChefLevel")?.Value switch {
+                                        "8" => "🌟 Grand Chef",
+                                        "7" => "🟢 Master Chef",
+                                        "6" => "🟢 Expert Culinarian",
+                                        "5" => "⚪ Skilled Chef",
+                                        "4" => "⚪ Confident Cook",
+                                        _   => "Home Cook"
+                                    })
+                                </div>
+                            </li>
+                            <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index">
+                                <i class="bi bi-person"></i> My Profile</a></li>
+                            <li><a class="dropdown-item" asp-controller="Account" asp-action="Settings">
+                                <i class="bi bi-gear"></i> Settings</a></li>
+                            <li><a class="dropdown-item" asp-controller="Recipe" asp-action="Suggest">
+                                <i class="bi bi-lightbulb"></i> Suggest a Recipe</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Sign Out
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                }
+                else
+                {
+                    <li class="nav-item">
+                        <a class="btn btn-outline-orange btn-sm"
+                           asp-controller="Account" asp-action="Login">Sign In</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-orange btn-sm"
+                           asp-controller="Account" asp-action="Register">Join Free</a>
+                    </li>
+                }
+
+                <!-- Dark mode toggle -->
+                <li class="nav-item">
+                    <button class="btn btn-icon" id="theme-toggle" aria-label="Toggle dark mode">
+                        <i class="bi bi-moon-stars" id="theme-icon"></i>
+                    </button>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- ══ SEARCH OVERLAY ═══════════════════════════════════════════ -->
+<div class="search-overlay" id="search-overlay">
+    <div class="container-xl">
+        <div class="search-box-wrap">
+            <div class="d-flex gap-2 align-items-center">
+                <button class="btn-icon" id="search-img-btn" title="Search by photo">
+                    <i class="bi bi-camera"></i>
+                </button>
+                <input type="text" id="global-search-input"
+                       class="form-control form-control-lg search-input"
+                       placeholder="Search recipes, cuisines, ingredients, countries…"
+                       autofocus autocomplete="off" />
+                <button class="btn-icon" id="search-voice-btn" title="Voice search">
+                    <i class="bi bi-mic"></i>
+                </button>
+                <button class="btn-icon" id="search-close" aria-label="Close search">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <!-- Image upload for visual search -->
+            <input type="file" id="search-img-input" accept="image/*" class="d-none" />
+            <div id="search-results" class="search-results-drop mt-2"></div>
+            <div class="d-flex flex-wrap gap-2 mt-3" id="search-suggestions">
+                <span class="search-pill">🇳🇬 Nigerian Jollof</span>
+                <span class="search-pill">🌮 Mexican Street Food</span>
+                <span class="search-pill">🍜 Japanese Ramen</span>
+                <span class="search-pill">🥘 Moroccan Tagine</span>
+                <span class="search-pill">🍛 Indian Curry</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ NOTIFICATION PANEL ═══════════════════════════════════════ -->
+<div class="notif-panel" id="notif-panel">
+    <div class="notif-header d-flex justify-content-between align-items-center px-3 py-2">
+        <span class="fw-semibold">Notifications</span>
+        <button class="btn btn-sm btn-link" id="mark-all-read">Mark all read</button>
+    </div>
+    <div id="notif-list" class="notif-list">
+        <div class="notif-empty text-center py-4 text-muted">
+            <i class="bi bi-bell-slash fs-2"></i>
+            <p class="mt-2 small">You're all caught up!</p>
+        </div>
+    </div>
+</div>
+
+<!-- ══ ALERTS (TempData) ════════════════════════════════════════ -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert-banner alert-banner-success" role="alert">
+        <i class="bi bi-check-circle-fill"></i> @TempData["Success"]
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert-banner alert-banner-danger" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i> @TempData["Error"]
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Info"] != null)
+{
+    <div class="alert-banner alert-banner-info" role="alert">
+        <i class="bi bi-info-circle-fill"></i> @TempData["Info"]
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- ══ MAIN CONTENT ═════════════════════════════════════════════ -->
+<main class="main-content">
+    @RenderBody()
+</main>
+
+<!-- ══ FOOTER ═══════════════════════════════════════════════════ -->
+<footer class="site-footer mt-5">
+    <div class="container-xl">
+        <div class="row g-4">
+            <div class="col-lg-3">
+                <div class="footer-brand mb-3">🍽️ My Meal Planner</div>
+                <p class="text-muted small">
+                    Discover recipes from every culture on Earth. Cook with confidence.
+                    Eat with purpose.
+                </p>
+                <div class="d-flex gap-3 mt-3">
+                    <a href="#" class="footer-social"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="footer-social"><i class="bi bi-youtube"></i></a>
+                    <a href="#" class="footer-social"><i class="bi bi-tiktok"></i></a>
+                    <a href="#" class="footer-social"><i class="bi bi-facebook"></i></a>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <h6 class="footer-heading">Discover</h6>
+                <ul class="footer-links">
+                    <li><a asp-controller="Explore" asp-action="Index">Cultural Explorer</a></li>
+                    <li><a asp-controller="Explore" asp-action="Rankings">World Rankings</a></li>
+                    <li><a asp-controller="Recipe" asp-action="Index">All Recipes</a></li>
+                    <li><a asp-controller="Explore" asp-action="CulturalMap">Food Map</a></li>
+                </ul>
+            </div>
+            <div class="col-6 col-lg-2">
+                <h6 class="footer-heading">Health</h6>
+                <ul class="footer-links">
+                    <li><a asp-controller="Health" asp-action="Nutrients">Nutrient Guide</a></li>
+                    <li><a asp-controller="Health" asp-action="Allergies">Allergy Info</a></li>
+                    <li><a asp-controller="Health" asp-action="Workout">Workout Food</a></li>
+                    <li><a asp-controller="Health" asp-action="Pets">Pet Cuisine</a></li>
+                </ul>
+            </div>
+            <div class="col-6 col-lg-2">
+                <h6 class="footer-heading">Community</h6>
+                <ul class="footer-links">
+                    <li><a asp-controller="Recipe" asp-action="Suggest">Submit Recipe</a></li>
+                    <li><a asp-controller="Jokes" asp-action="Index">Cooking Jokes</a></li>
+                    <li><a asp-controller="Quiz" asp-action="Index">Chef Quiz</a></li>
+                    <li><a href="#">Expert Corner</a></li>
+                </ul>
+            </div>
+            <div class="col-6 col-lg-3">
+                <h6 class="footer-heading">Language</h6>
+                <select class="form-select form-select-sm footer-lang-select"
+                        id="language-picker" aria-label="Language selector">
+                    <option value="en">🇬🇧 English</option>
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="pt">🇧🇷 Português</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="zh">🇨🇳 中文</option>
+                    <option value="hi">🇮🇳 हिन्दी</option>
+                    <option value="sw">🇰🇪 Kiswahili</option>
+                    <option value="de">🇩🇪 Deutsch</option>
+                    <option value="it">🇮🇹 Italiano</option>
+                    <option value="ja">🇯🇵 日本語</option>
+                    <option value="ko">🇰🇷 한국어</option>
+                </select>
+            </div>
+        </div>
+        <div class="footer-bottom mt-4 pt-3 border-top d-flex flex-wrap gap-3 justify-content-between align-items-center">
+            <p class="mb-0 text-muted small">
+                © @DateTime.Now.Year My Meal Planner. All rights reserved.
+            </p>
+            <div class="d-flex gap-3">
+                <a href="#" class="text-muted small">Privacy Policy</a>
+                <a href="#" class="text-muted small">Terms of Service</a>
+                <a href="#" class="text-muted small">Cookie Policy</a>
+                <a href="#" class="text-muted small">Contact</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+
+<!-- Mia AI Chat (authenticated users only) -->
+<partial name="_MiaChat" />
+
+<!-- PWA Service Worker -->
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+            .then(reg => console.log('[SW] Registered:', reg.scope))
+            .catch(err => console.log('[SW] Registration failed:', err));
+    });
+}
+</script>
+
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

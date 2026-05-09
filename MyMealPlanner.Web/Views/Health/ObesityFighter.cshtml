@@ -1,0 +1,82 @@
+@* ══ Health/ObesityFighter.cshtml ═══════════════════════════════ *@
+@model List<MyMealPlanner.Core.Models.Recipe>
+@{ ViewData["Title"] = "Obesity Fighter"; }
+
+<div class="container-xl py-4">
+    <h1 class="section-heading">⚖️ Obesity Fighter</h1>
+    <p class="text-muted mb-5">
+        Low-calorie, high-satiety recipes and food science to help you eat well and maintain a healthy weight.
+        Inspired by cultures worldwide that have low obesity rates.
+    </p>
+
+    <!-- Science Cards -->
+    <div class="row g-3 mb-5">
+        @{
+            var strategies = new[] {
+                ("🔥","Metabolism Boosters","Green tea, Chilli pepper, Ginger, Coffee, Cinnamon","These foods temporarily raise your metabolic rate, helping you burn more calories at rest."),
+                ("💧","High Volume, Low Calorie","Cucumber, Watermelon, Lettuce, Broth soups, Courgette","Eat large portions without excess calories. High water content triggers fullness signals."),
+                ("💪","Satiety Champions","Eggs, Oats, Greek yoghurt, Legumes, Avocado","High protein and fibre slow digestion, keeping you full for hours and reducing snacking."),
+                ("🧠","Blood Sugar Stabilisers","Lentils, Sweet potato, Barley, Apple, Vinegar","Low-glycaemic foods prevent blood sugar spikes that lead to hunger crashes and overeating."),
+                ("🚫","Foods to Reduce","Sugary drinks, Ultra-processed snacks, White bread, Alcohol","These are calorie-dense with low nutritional value and trigger overconsumption."),
+                ("🌍","Cultural Wisdom","Japanese Hara Hachi Bu (eat to 80% full), Mediterranean portions, West African plant-rich stews","Traditional eating patterns from low-obesity cultures offer powerful lessons."),
+            };
+        }
+        @foreach (var (emoji, title, foods, science) in strategies)
+        {
+            <div class="col-md-6 col-lg-4 fade-up">
+                <div class="bg-white rounded-3 shadow-sm p-4 h-100"
+                     style="border-top:3px solid var(--orange)">
+                    <div style="font-size:2rem">@emoji</div>
+                    <h5 class="fw-bold mt-2 mb-1">@title</h5>
+                    <div class="tag tag-orange mb-2" style="font-size:.78rem">@foods</div>
+                    <p class="small text-muted mb-0">@science</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- BMI Quick Check -->
+    <div class="bg-white rounded-3 shadow-sm p-4 mb-5">
+        <h4 class="fw-bold mb-3">📊 Quick BMI Reference</h4>
+        <div class="row g-2">
+            @{
+                var bmiRanges = new[] {
+                    ("Under 18.5","Underweight","Consider a nutrient-dense, calorie-rich diet","#2563EB"),
+                    ("18.5 – 24.9","Healthy Weight","Maintain with balanced diet and regular activity","#22A86B"),
+                    ("25.0 – 29.9","Overweight","Focus on portion control and increasing vegetable intake","#F5A623"),
+                    ("30.0 and above","Obese","Consult a doctor. Focus on whole foods and movement","#E84646"),
+                };
+            }
+            @foreach (var (range, label, advice, color) in bmiRanges)
+            {
+                <div class="col-md-3">
+                    <div class="p-3 rounded-3 h-100 text-center"
+                         style="background:@color15;border:2px solid @color">
+                        <div class="fw-bold" style="color:@color">@label</div>
+                        <div class="small fw-semibold my-1">BMI @range</div>
+                        <div class="small text-muted">@advice</div>
+                    </div>
+                </div>
+            }
+        </div>
+        <p class="small text-muted mt-3 mb-0">
+            BMI is a general indicator — not a complete health measure. Consult a healthcare provider for personalised guidance.
+        </p>
+    </div>
+
+    <!-- Low-cal recipe grid -->
+    @if (Model.Any())
+    {
+        <h3 class="section-heading mb-4">🥗 Healthy Weight Recipes</h3>
+        <div class="row g-3">
+            @foreach (var recipe in Model)
+            {
+                <div class="col-6 col-md-3 fade-up stagger-@(Model.IndexOf(recipe) % 4 + 1)">
+                    <partial name="_RecipeCard" model="recipe" />
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@* ══ Health/Pets.cshtml ══════════════════════════════════════════ *@

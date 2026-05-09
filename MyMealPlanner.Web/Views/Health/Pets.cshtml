@@ -1,0 +1,144 @@
+@* ══ Health/Pets.cshtml ══════════════════════════════════════════ *@
+@using MyMealPlanner.Core.Enums
+@{ ViewData["Title"] = "Pet Cuisine & Nutrition"; }
+
+<div class="container-xl py-4">
+    <h1 class="section-heading">🐾 Pet Cuisine & Nutrition</h1>
+    <p class="text-muted mb-5">
+        Homemade pet meal recipes, critical toxic food warnings, and nutritional guides
+        for the furry, feathered, and scaly members of your family.
+    </p>
+
+    <!-- Pet Type Selector -->
+    @{
+        var pets = new[] {
+            (PetType.Dog,      "🐕", "Dogs"),
+            (PetType.Cat,      "🐈", "Cats"),
+            (PetType.Bird,     "🐦", "Birds"),
+            (PetType.Rabbit,   "🐇", "Rabbits"),
+            (PetType.Fish,     "🐠", "Fish"),
+            (PetType.Hamster,  "🐹", "Hamsters"),
+            (PetType.GuineaPig,"🐾", "Guinea Pigs"),
+        };
+        var petGuides = new Dictionary<PetType, (string[], string[], string, string)>
+        {
+            [PetType.Dog] = (
+                new[] { "Plain chicken or turkey (cooked)", "Brown rice", "Carrots", "Blueberries", "Pumpkin (plain)", "Salmon (cooked)", "Eggs (cooked)", "Green beans", "Watermelon (no seeds)" },
+                new[] { "Grapes & raisins (kidney failure)", "Chocolate (toxic)", "Onions & garlic (red blood cells)", "Xylitol (sweetener — deadly)", "Avocado (dogs only)", "Macadamia nuts", "Alcohol", "Cooked bones (splinter risk)" },
+                "Feed 2–3% of body weight per day in home-cooked food. Always consult your vet.",
+                "Dogs need a balance of protein (40%), vegetables (30%), and carbs (30%). Avoid raw chicken if your dog has a sensitive stomach."
+            ),
+            [PetType.Cat] = (
+                new[] { "Cooked chicken or turkey", "Cooked salmon", "Cooked eggs", "Pumpkin (digestive aid)", "Plain yoghurt (small amounts)", "Cooked liver (occasionally)" },
+                new[] { "Onions & garlic (very toxic)", "Grapes & raisins", "Chocolate", "Alcohol", "Caffeinated foods", "Raw fish (regularly — thiamine deficiency)", "Dairy in large amounts (lactose intolerant)" },
+                "Cats are obligate carnivores — they need animal protein. Plant-based diets are not appropriate.",
+                "Unlike dogs, cats cannot synthesise taurine — ensure their diet includes animal-sourced taurine. They also need very little carbohydrates."
+            ),
+            [PetType.Rabbit] = (
+                new[] { "Hay (80% of diet)", "Fresh leafy greens (kale, romaine)", "Small amounts of fruit (apple, pear)", "Bell peppers", "Herbs (parsley, basil, cilantro)" },
+                new[] { "Iceberg lettuce (no nutritional value)", "Onions & garlic", "Chocolate", "Rhubarb (toxic)", "Avocado", "Sugary treats" },
+                "Hay is essential — it keeps their digestive system moving and wears down teeth.",
+                "Fresh water must always be available. Introduce new vegetables slowly to avoid digestive upset."
+            ),
+            [PetType.Bird] = (
+                new[] { "Pellets (base diet)", "Fresh vegetables (broccoli, carrot, bell pepper)", "Fruits (apple, mango, berries)", "Whole grains (cooked rice, quinoa)", "Cooked eggs occasionally" },
+                new[] { "Avocado (highly toxic to birds)", "Chocolate", "Onions & garlic", "Fruit seeds & apple cores (cyanide)", "Alcohol", "Caffeinated foods", "Salty snacks" },
+                "Pellets should make up 60–70% of the diet, supplemented with fresh foods.",
+                "Different bird species have different needs — parrots, canaries, and finches all have unique dietary requirements."
+            ),
+            [PetType.Fish] = (
+                new[] { "Species-appropriate flakes or pellets", "Freeze-dried bloodworms", "Brine shrimp", "Blanched vegetables (for herbivores)", "Spirulina wafers" },
+                new[] { "Human food (bread, crackers)", "Overfeeding (causes water quality issues)", "Citrus fruits", "Spicy or seasoned food" },
+                "Feed only what your fish can consume in 2–3 minutes, once or twice daily.",
+                "Research your specific species — tropical, cold water, and marine fish have very different nutritional needs."
+            ),
+            [PetType.Hamster] = (
+                new[] { "Commercial hamster mix", "Small pieces of carrot, broccoli, cucumber", "Cooked chicken (tiny amounts)", "Unsalted sunflower seeds", "Whole grain bread" },
+                new[] { "Citrus fruits (too acidic)", "Onions & garlic", "Chocolate", "Sugary sweets", "Almonds (contain cyanide compounds)", "Sticky foods (cheek pouch hazard)" },
+                "Hamsters can store food in their cheek pouches — avoid sticky foods that could cause impaction.",
+                "Feed a small amount daily. Hamsters naturally hoard food, so scatter feeding encourages natural behaviour."
+            ),
+            [PetType.GuineaPig] = (
+                new[] { "Timothy hay (unlimited)", "Bell peppers (high in Vitamin C)", "Leafy greens (romaine, kale)", "Cucumber", "Small amounts of fruit" },
+                new[] { "Potatoes (toxic)", "Onions & garlic", "Rhubarb (leaves especially)", "Iceberg lettuce (too much water)", "Chocolate" },
+                "Guinea pigs cannot synthesise Vitamin C — they must get it from food daily or risk scurvy.",
+                "Unlike rabbits, guinea pigs should not eat their cecotropes — if you see this, check their diet quality."
+            ),
+        };
+    }
+
+    <ul class="nav nav-pills mb-5 gap-2" id="pet-tabs">
+        @foreach (var (type, emoji, name) in pets)
+        {
+            <li class="nav-item">
+                <a class="nav-link @(type == PetType.Dog ? "active" : "")"
+                   data-bs-toggle="pill" href="#pet-@type">
+                    @emoji @name
+                </a>
+            </li>
+        }
+    </ul>
+
+    <div class="tab-content">
+        @foreach (var (type, emoji, name) in pets)
+        {
+            if (!petGuides.TryGetValue(type, out var guide)) continue;
+            var (safeFoods, toxicFoods, feeding, nutrition) = guide;
+
+            <div class="tab-pane @(type == PetType.Dog ? "active show" : "")" id="pet-@type">
+                <div class="row g-4">
+                    <div class="col-md-5">
+                        <div class="bg-white rounded-3 shadow-sm p-4 h-100"
+                             style="border-top:3px solid var(--green)">
+                            <h5 class="fw-bold mb-3">✅ Safe Foods for @name</h5>
+                            @foreach (var food in safeFoods)
+                            {
+                                <div class="d-flex align-items-center gap-2 py-2 border-bottom">
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                    <span class="small">@food</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="rounded-3 p-4 h-100" style="background:#FFF0F0;border:2px solid var(--red)">
+                            <h5 class="fw-bold mb-3 text-danger">⚠️ NEVER Feed These</h5>
+                            @foreach (var food in toxicFoods)
+                            {
+                                <div class="d-flex align-items-start gap-2 py-2 border-bottom">
+                                    <i class="bi bi-x-octagon-fill text-danger flex-shrink-0 mt-1"></i>
+                                    <span class="small">@food</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="bg-white rounded-3 shadow-sm p-4 h-100">
+                            <h6 class="fw-bold mb-3">🍽️ Feeding Guide</h6>
+                            <p class="small mb-3">@feeding</p>
+                            <div class="p-3 rounded-2" style="background:var(--orange-light)">
+                                <div class="fw-bold small mb-1">💡 Nutrition Note</div>
+                                <p class="small mb-0">@nutrition</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="mt-5 p-4 rounded-3" style="background:var(--light-2)">
+        <div class="d-flex gap-3 align-items-start">
+            <span style="font-size:2rem">🏥</span>
+            <div>
+                <h5 class="fw-bold">Always Consult Your Vet</h5>
+                <p class="text-muted mb-0">
+                    This guide provides general nutritional information. Every pet is unique —
+                    age, breed, health conditions, and weight all affect dietary needs.
+                    Always consult a licensed veterinarian before making significant changes
+                    to your pet's diet, especially if they have health conditions.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

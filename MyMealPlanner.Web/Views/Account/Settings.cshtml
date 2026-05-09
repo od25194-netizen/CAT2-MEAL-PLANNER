@@ -1,0 +1,301 @@
+@model MyMealPlanner.Web.ViewModels.SettingsViewModel
+@{ ViewData["Title"] = "Settings"; }
+
+<div class="container-xl py-4">
+    <div class="row g-4">
+
+        <!-- ══ Sidebar Nav ════════════════════════════════════════ -->
+        <div class="col-lg-3">
+            <div class="bg-white rounded-3 shadow-sm p-3 sticky-top" style="top:80px">
+                <div class="fw-bold mb-3 px-2">⚙️ Settings</div>
+                <nav class="d-flex flex-column gap-1" id="settings-nav">
+                    @{
+                        var sections = new[] {
+                            ("appearance",   "bi-palette",         "Appearance"),
+                            ("food",         "bi-egg-fried",       "Food Preferences"),
+                            ("notifications","bi-bell",            "Notifications"),
+                            ("privacy",      "bi-shield-lock",     "Privacy"),
+                            ("language",     "bi-globe2",          "Language & Region"),
+                            ("account",      "bi-person-gear",     "Account"),
+                            ("security",     "bi-lock",            "Security"),
+                            ("danger",       "bi-exclamation-triangle","Danger Zone"),
+                        };
+                    }
+                    @foreach (var (id, icon, label) in sections)
+                    {
+                        <a href="#@id" class="settings-nav-link d-flex align-items-center gap-2 p-2 rounded-2 text-decoration-none text-dark"
+                           style="font-size:.9rem;transition:all .15s"
+                           onmouseover="this.style.background='var(--orange-light)'"
+                           onmouseout="this.style.background=''">
+                            <i class="bi @icon text-orange"></i> @label
+                        </a>
+                    }
+                </nav>
+            </div>
+        </div>
+
+        <!-- ══ Settings Panels ════════════════════════════════════ -->
+        <div class="col-lg-9">
+            <form asp-action="Settings" method="post" id="settings-form">
+                @Html.AntiForgeryToken()
+
+                <!-- ── Appearance ── -->
+                <div class="settings-panel bg-white rounded-3 shadow-sm p-4 mb-4" id="appearance">
+                    <h5 class="fw-bold mb-4">🎨 Appearance</h5>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                        <div>
+                            <div class="fw-semibold">Dark Mode</div>
+                            <div class="small text-muted">Switch to a darker interface</div>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input asp-for="DarkMode" class="form-check-input" type="checkbox"
+                                   style="width:48px;height:24px" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3 pb-3 border-bottom">
+                        <div class="fw-semibold mb-2">Accent Colour</div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @foreach (var color in new[] { "#E8630A","#2563EB","#22A86B","#7C3AED","#E84646","#F5A623","#0891B2","#059669" })
+                            {
+                                <label class="d-flex align-items-center justify-content-center"
+                                       style="width:36px;height:36px;border-radius:50%;background:@color;cursor:pointer;border:3px solid transparent;transition:.15s"
+                                       title="@color">
+                                    <input type="radio" asp-for="AccentColor" value="@color" class="d-none"
+                                           onchange="document.documentElement.style.setProperty('--orange',this.value)" />
+                                </label>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                        <div>
+                            <div class="fw-semibold">High Contrast Mode</div>
+                            <div class="small text-muted">Improves readability for visual impairments</div>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input asp-for="HighContrast" class="form-check-input" type="checkbox"
+                                   style="width:48px;height:24px" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">Reduce Animations</div>
+                            <div class="small text-muted">For motion sensitivity or performance</div>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input asp-for="ReduceAnimations" class="form-check-input" type="checkbox"
+                                   style="width:48px;height:24px" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Notifications ── -->
+                <div class="settings-panel bg-white rounded-3 shadow-sm p-4 mb-4" id="notifications">
+                    <h5 class="fw-bold mb-4">🔔 Notifications</h5>
+
+                    @{
+                        var notifToggles = new[] {
+                            (nameof(Model.EmailNotifications),    "Email Notifications",       "Receive updates via email",                     Model.EmailNotifications),
+                            (nameof(Model.PushNotifications),     "Push Notifications",        "Real-time alerts in your browser",              Model.PushNotifications),
+                            (nameof(Model.DailyJokeNotification), "Daily Cooking Joke 😂",     "A fresh joke delivered every morning",          Model.DailyJokeNotification),
+                            (nameof(Model.MealTimeReminders),     "Meal Time Reminders",       "Breakfast, lunch, dinner suggestions",          Model.MealTimeReminders),
+                            (nameof(Model.QuizReminders),         "Quiz & Level-Up Alerts",    "Know when your next quiz is ready",             Model.QuizReminders),
+                            (nameof(Model.SocialAlerts),          "Social Alerts",             "Likes, comments, follows, mentions",            Model.SocialAlerts),
+                            (nameof(Model.TrendingAlerts),        "Trending in Your Country",  "Top dishes rising in your area",                Model.TrendingAlerts),
+                            (nameof(Model.CookingClassReminders), "Cooking Class Reminders",   "Live chef sessions and community challenges",   Model.CookingClassReminders),
+                        };
+                    }
+                    @foreach (var (prop, label, desc, val) in notifToggles)
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                            <div>
+                                <div class="fw-semibold">@label</div>
+                                <div class="small text-muted">@desc</div>
+                            </div>
+                            <div class="form-check form-switch mb-0">
+                                <input type="checkbox" name="@prop" class="form-check-input"
+                                       style="width:48px;height:24px" @(val ? "checked" : "") />
+                            </div>
+                        </div>
+                    }
+
+                    <div>
+                        <label class="form-label fw-semibold">Email Frequency</label>
+                        <select asp-for="NotificationFrequency" class="form-select">
+                            <option value="RealTime">Real-time (immediate)</option>
+                            <option value="Daily">Daily Digest</option>
+                            <option value="Weekly">Weekly Summary</option>
+                            <option value="Never">Never</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ── Privacy ── -->
+                <div class="settings-panel bg-white rounded-3 shadow-sm p-4 mb-4" id="privacy">
+                    <h5 class="fw-bold mb-4">🔒 Privacy</h5>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Profile Visibility</label>
+                        <select asp-for="ProfileVisibility" class="form-select">
+                            <option value="Public">🌍 Public — anyone can view</option>
+                            <option value="Followers">👥 Followers only</option>
+                            <option value="Private">🔒 Private</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Who Can Message Me</label>
+                        <select asp-for="WhoCanMessage" class="form-select">
+                            <option value="Everyone">Everyone</option>
+                            <option value="Following">People I follow</option>
+                            <option value="Nobody">Nobody</option>
+                        </select>
+                    </div>
+
+                    @{
+                        var privacyToggles = new[] {
+                            (nameof(Model.ShowOnlineStatus), "Show Online Status",    "Others can see when you're active", Model.ShowOnlineStatus),
+                            (nameof(Model.ShowLocation),     "Show My Location",      "Display city/country on profile",   Model.ShowLocation),
+                            (nameof(Model.ShowAge),          "Show My Age",           "Display age on your profile",       Model.ShowAge),
+                            (nameof(Model.ShowPets),         "Show Pet Profiles",     "Display your pets publicly",        Model.ShowPets),
+                        };
+                    }
+                    @foreach (var (prop, label, desc, val) in privacyToggles)
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                            <div>
+                                <div class="fw-semibold">@label</div>
+                                <div class="small text-muted">@desc</div>
+                            </div>
+                            <div class="form-check form-switch mb-0">
+                                <input type="checkbox" name="@prop" class="form-check-input"
+                                       style="width:48px;height:24px" @(val ? "checked" : "") />
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- ── Language ── -->
+                <div class="settings-panel bg-white rounded-3 shadow-sm p-4 mb-4" id="language">
+                    <h5 class="fw-bold mb-4">🌍 Language & Region</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Language</label>
+                            <select asp-for="PreferredLanguage" class="form-select">
+                                @foreach (var (code, name) in new[] {
+                                    ("en","🇬🇧 English"),("fr","🇫🇷 Français"),("es","🇪🇸 Español"),
+                                    ("pt","🇧🇷 Português"),("ar","🇸🇦 العربية"),("zh","🇨🇳 中文"),
+                                    ("hi","🇮🇳 हिन्दी"),("sw","🇰🇪 Kiswahili"),("de","🇩🇪 Deutsch"),
+                                    ("it","🇮🇹 Italiano"),("ja","🇯🇵 日本語"),("ko","🇰🇷 한국어"),
+                                })
+                                { <option value="@code">@name</option> }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Currency</label>
+                            <select asp-for="PreferredCurrency" class="form-select">
+                                @foreach (var (code, name) in new[] {
+                                    ("USD","🇺🇸 USD — US Dollar"),("GBP","🇬🇧 GBP — British Pound"),
+                                    ("EUR","🇪🇺 EUR — Euro"),("NGN","🇳🇬 NGN — Naira"),
+                                    ("GHS","🇬🇭 GHS — Cedi"),("KES","🇰🇪 KES — Shilling"),
+                                    ("ZAR","🇿🇦 ZAR — Rand"),("INR","🇮🇳 INR — Rupee"),
+                                    ("JPY","🇯🇵 JPY — Yen"),("CAD","🇨🇦 CAD — Can Dollar"),
+                                })
+                                { <option value="@code">@name</option> }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Units</label>
+                            <select asp-for="PreferredUnits" class="form-select">
+                                <option value="metric">Metric (g, ml, °C)</option>
+                                <option value="imperial">Imperial (oz, cups, °F)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Time Zone</label>
+                            <select asp-for="TimeZone" class="form-select">
+                                <option value="UTC">UTC</option>
+                                <option value="Africa/Lagos">Africa/Lagos (WAT)</option>
+                                <option value="Africa/Nairobi">Africa/Nairobi (EAT)</option>
+                                <option value="Europe/London">Europe/London (GMT)</option>
+                                <option value="Europe/Paris">Europe/Paris (CET)</option>
+                                <option value="America/New_York">America/New_York (EST)</option>
+                                <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
+                                <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                                <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                                <option value="Australia/Sydney">Australia/Sydney (AEST)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="d-flex justify-content-end gap-2 mb-4">
+                    <button type="button" class="btn btn-outline-orange"
+                            onclick="window.location.reload()">Discard Changes</button>
+                    <button type="submit" class="btn btn-orange px-4">
+                        <i class="bi bi-check2"></i> Save Settings
+                    </button>
+                </div>
+            </form>
+
+            <!-- ── Account Actions (outside form) ── -->
+            <div class="settings-panel bg-white rounded-3 shadow-sm p-4 mb-4" id="account">
+                <h5 class="fw-bold mb-4">👤 Account Actions</h5>
+                <div class="d-flex flex-column gap-3">
+                    <div class="d-flex justify-content-between align-items-center pb-3 border-bottom">
+                        <div>
+                            <div class="fw-semibold">Change Password</div>
+                            <div class="small text-muted">Update your login password</div>
+                        </div>
+                        <a asp-controller="Account" asp-action="ChangePassword"
+                           class="btn btn-outline-orange btn-sm">Change</a>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center pb-3 border-bottom">
+                        <div>
+                            <div class="fw-semibold">Two-Factor Authentication</div>
+                            <div class="small text-muted">Add an extra layer of security</div>
+                        </div>
+                        <a asp-controller="Account" asp-action="Enable2FA"
+                           class="btn btn-outline-orange btn-sm">Manage</a>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center pb-3 border-bottom">
+                        <div>
+                            <div class="fw-semibold">Download My Data</div>
+                            <div class="small text-muted">Export all your data (GDPR)</div>
+                        </div>
+                        <form asp-action="DownloadMyData" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-orange btn-sm">Download</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Danger Zone ── -->
+            <div class="settings-panel bg-white rounded-3 shadow-sm p-4 mb-4" id="danger"
+                 style="border-left:4px solid var(--red)">
+                <h5 class="fw-bold mb-2" style="color:var(--red)">⚠️ Danger Zone</h5>
+                <p class="text-muted small mb-4">
+                    These actions are irreversible. Please proceed with caution.
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-semibold">Delete My Account</div>
+                        <div class="small text-muted">
+                            Your account will be permanently deleted after a 30-day grace period.
+                        </div>
+                    </div>
+                    <a asp-controller="Account" asp-action="DeleteAccount"
+                       class="btn btn-sm"
+                       style="background:var(--red);color:white;border:none">
+                        Delete Account
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

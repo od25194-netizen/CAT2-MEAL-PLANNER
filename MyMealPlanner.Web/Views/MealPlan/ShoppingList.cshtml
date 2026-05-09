@@ -1,0 +1,161 @@
+@* ══ MealPlan/ShoppingList.cshtml ════════════════════════════════ *@
+@model MyMealPlanner.Core.Models.ShoppingList
+@{ ViewData["Title"] = "Shopping List"; }
+
+<div class="container-xl py-4" style="max-width:860px">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h1 class="display-font mb-0">🛒 Shopping List</h1>
+            <p class="text-muted mb-0 small mt-1">
+                @Model.Items.Count items · Generated @Model.GeneratedAt.ToString("MMMM d, yyyy")
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-orange btn-sm" onclick="shareList()">
+                <i class="bi bi-whatsapp"></i> Share on WhatsApp
+            </button>
+            <button class="btn btn-outline-orange btn-sm" onclick="printList()">
+                <i class="bi bi-printer"></i> Print
+            </button>
+            <a asp-action="ExportPdf" asp-route-id="@Model.MealPlanId"
+               class="btn btn-orange btn-sm">
+                <i class="bi bi-filetype-pdf"></i> Export PDF
+            </a>
+            <a asp-action="Index" class="btn btn-outline-orange btn-sm">← Meal Plan</a>
+        </div>
+    </div>
+
+    <!-- Progress bar -->
+    @{
+        int purchased = Model.Items.Count(i => i.IsPurchased);
+        int total     = Model.Items.Count;
+        double pct    = total > 0 ? (double)purchased / total * 100 : 0;
+    }
+    <div class="bg-white rounded-3 shadow-sm p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-semibold">Shopping Progress</span>
+            <span class="small text-muted">@purchased / @total items</span>
+        </div>
+        <div class="level-bar" style="height:10px">
+            <div class="level-bar-fill" id="progress-fill"
+                 style="width:@pct.ToString("F0")%;background:var(--green)"></div>
+        </div>
+        @if (purchased == total && total > 0)
+        {
+            <div class="text-center mt-2 fw-semibold text-success">
+                ✅ All items collected! Happy cooking!
+            </div>
+        }
+    </div>
+
+    <!-- Grouped by store section -->
+    @{
+        var sections = Model.Items
+            .GroupBy(i => i.StoreSection ?? "Other")
+            .OrderBy(g => g.Key)
+            .ToList();
+
+        var sectionEmojis = new Dictionary<string, string> {
+            ["Meat & Fish"]     = "🥩",
+            ["Produce"]         = "🥦",
+            ["Dairy & Eggs"]    = "🥛",
+            ["Grains & Staples"]= "🌾",
+            ["Spices & Oils"]   = "🧂",
+            ["Canned & Sauces"] = "🥫",
+            ["Other"]           = "🛒",
+        };
+    }
+
+    <div class="row g-4 print-area" id="shopping-list">
+        @foreach (var section in sections)
+        {
+            var emoji = sectionEmojis.GetValueOrDefault(section.Key, "🛒");
+            <div class="col-12 col-md-6">
+                <div class="bg-white rounded-3 shadow-sm p-4">
+                    <h5 class="fw-bold mb-3">
+                        @emoji @section.Key
+                        <span class="tag tag-country ms-2" style="font-size:.75rem">
+                            @section.Count() items
+                        </span>
+                    </h5>
+
+                    @foreach (var item in section.OrderBy(i => i.IngredientName))
+                    {
+                        <div class="shopping-item @(item.IsPurchased ? "checked" : "")"
+                             id="item-@item.Id">
+                            <input type="checkbox"
+                                   class="form-check-input shopping-check"
+                                   data-id="@item.Id"
+                                   @(item.IsPurchased ? "checked" : "") />
+                            <label class="flex-grow-1 cursor-pointer ms-2"
+                                   onclick="document.querySelector('.shopping-check[data-id=@item.Id]').click()">
+                                <span class="fw-semibold">
+                                    @item.Quantity.ToString("G") @item.Unit
+                                </span>
+                                @item.IngredientName
+                            </label>
+                            @if (item.EstimatedCost.HasValue)
+                            {
+                                <span class="small text-muted">~$@item.EstimatedCost.Value.ToString("F2")</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Total estimate -->
+    @{
+        decimal totalCost = Model.Items.Sum(i => i.EstimatedCost ?? 0);
+    }
+    @if (totalCost > 0)
+    {
+        <div class="bg-white rounded-3 shadow-sm p-4 mt-4 d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">Estimated Total</span>
+            <span class="fw-bold fs-5 text-orange">~$@totalCost.ToString("F2")</span>
+        </div>
+    }
+</div>
+
+<style>
+@@media print {
+    .btn, nav, footer, #main-nav { display: none !important; }
+    .print-area { display: block !important; }
+    .col-md-6 { width: 50%; float: left; }
+}
+</style>
+
+@section Scripts {
+<script>
+document.querySelectorAll('.shopping-check').forEach(cb => {
+    cb.addEventListener('change', async function() {
+        const id   = this.dataset.id;
+        const row  = document.getElementById('item-' + id);
+        row?.classList.toggle('checked', this.checked);
+
+        await fetch(`/MealPlan/ToggleShoppingItem/${id}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': document.querySelector('[name=__RequestVerificationToken]')?.value || '' }
+        });
+
+        // Update progress
+        const all       = document.querySelectorAll('.shopping-check');
+        const checked   = document.querySelectorAll('.shopping-check:checked');
+        const pct       = all.length ? (checked.length / all.length * 100).toFixed(0) : 0;
+        document.getElementById('progress-fill').style.width = pct + '%';
+    });
+});
+
+function shareList() {
+    const items = [...document.querySelectorAll('.shopping-item:not(.checked) label')]
+        .map(l => l.textContent.trim())
+        .join('\n');
+    const text = `My Shopping List from My Meal Planner 🍽️\n\n${items}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+function printList() { window.print(); }
+</script>
+@Html.AntiForgeryToken()
+}

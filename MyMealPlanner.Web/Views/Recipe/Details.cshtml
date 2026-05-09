@@ -1,0 +1,452 @@
+@model MyMealPlanner.Core.Models.Recipe
+@using MyMealPlanner.Core.DTOs
+@{
+    ViewData["Title"] = Model.Title;
+    var ytMeta      = ViewBag.YouTubeMeta as YouTubeVideoDto;
+    var ytEmbed     = ViewBag.YouTubeEmbed as string;
+    var costInfo    = ViewBag.CostInfo as MyMealPlanner.Core.Models.IngredientCost;
+    var relVideos   = ViewBag.RelatedVideos as List<YouTubeVideoDto> ?? new();
+    var multiplier  = (double)(ViewBag.ServingsMultiplier ?? 1.0);
+    var targetServ  = (int)(ViewBag.TargetServings ?? Model.Servings);
+    var userLiked   = (bool)(ViewBag.UserHasLiked ?? false);
+    var userSaved   = (bool)(ViewBag.UserHasSaved ?? false);
+    var rankings    = ViewBag.Rankings as List<MyMealPlanner.Core.Models.DishRanking> ?? new();
+}
+
+<div class="container-xl py-4">
+    <div class="row g-4">
+
+        <!-- ════ LEFT — Recipe Content ═══════════════════════════ -->
+        <div class="col-lg-8">
+
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb small">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Recipe" asp-action="Index">Recipes</a></li>
+                    @if (!string.IsNullOrEmpty(Model.OriginContinent))
+                    {
+                        <li class="breadcrumb-item">
+                            <a asp-controller="Recipe" asp-action="Index"
+                               asp-route-continent="@Model.OriginContinent">@Model.OriginContinent</a>
+                        </li>
+                    }
+                    <li class="breadcrumb-item active">@Model.Title</li>
+                </ol>
+            </nav>
+
+            <!-- Cover Image -->
+            @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+            {
+                <img src="@Model.CoverImageUrl" alt="@Model.Title"
+                     class="w-100 mb-4"
+                     style="border-radius:var(--radius-lg);max-height:480px;object-fit:cover" />
+            }
+
+            <!-- Title & Meta -->
+            <h1 class="display-font" style="font-size:2.25rem;line-height:1.15">@Model.Title</h1>
+
+            <!-- Tags row -->
+            <div class="d-flex flex-wrap gap-2 my-3">
+                @if (!string.IsNullOrEmpty(Model.OriginCountry))
+                { <span class="tag tag-country">🌍 @Model.OriginCountry</span> }
+                @if (!string.IsNullOrEmpty(Model.CultureTag))
+                { <span class="tag tag-blue">🎭 @Model.CultureTag</span> }
+                <span class="tag tag-orange"><i class="bi bi-clock"></i> @(Model.PrepTimeMinutes + Model.CookTimeMinutes) min</span>
+                <span class="tag tag-green">@Model.DifficultyLevel</span>
+                <span class="tag tag-country">@Model.MealType</span>
+                <span class="tag tag-country">@Model.CookingEnvironment</span>
+                @if (!string.IsNullOrEmpty(Model.YouTubeVideoId))
+                { <span class="tag tag-red"><i class="bi bi-youtube"></i> Video</span> }
+            </div>
+
+            <!-- Actions -->
+            <div class="gap-action mb-4">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <button class="btn btn-outline-orange @(userLiked ? "liked" : "")"
+                            data-like-recipe="@Model.Id">
+                        <i class="bi @(userLiked ? "bi-heart-fill text-danger" : "bi-heart") like-icon"></i>
+                        <span class="like-count">@Model.LikeCount.ToString("N0")</span>
+                    </button>
+                    <button class="btn btn-outline-orange" data-save-recipe="@Model.Id">
+                        <i class="bi @(userSaved ? "bi-bookmark-fill text-orange" : "bi-bookmark")"></i>
+                        Save
+                    </button>
+                    <button class="btn btn-outline-orange" onclick="shareRecipe()">
+                        <i class="bi bi-share"></i> Share
+                    </button>
+                }
+                <a href="#cook-log-form" class="btn btn-orange">
+                    <i class="bi bi-check2-circle"></i> I Cooked This
+                </a>
+            </div>
+
+            <!-- Cultural Story -->
+            @if (!string.IsNullOrEmpty(Model.CulturalStory))
+            {
+                <div class="p-4 rounded-3 mb-4" style="background:var(--orange-light);border-left:4px solid var(--orange)">
+                    <div class="fw-bold mb-2 text-orange">🌍 Cultural Story</div>
+                    <p class="mb-0" style="font-family:var(--font-display);font-size:1.05rem;line-height:1.7">
+                        @Model.CulturalStory
+                    </p>
+                </div>
+            }
+
+            <!-- Description -->
+            <p class="text-muted mb-4">@Model.Description</p>
+
+            <!-- ── Servings Scaler ──── -->
+            <div class="d-flex align-items-center gap-3 p-3 rounded-3 mb-4"
+                 style="background:var(--light-2)">
+                <i class="bi bi-people-fill text-orange fs-5"></i>
+                <span class="fw-semibold">Servings:</span>
+                <input type="number" id="servings-input"
+                       class="form-control form-control-sm"
+                       style="width:80px"
+                       value="@targetServ" min="1" max="100"
+                       data-base="@Model.Servings" />
+                <span class="text-muted small">Base recipe: @Model.Servings servings</span>
+            </div>
+
+            <!-- ── Ingredients ──── -->
+            <h2 class="section-heading mt-4">Ingredients</h2>
+            <ul class="list-unstyled">
+                @foreach (var ing in Model.Ingredients.OrderBy(i => i.SortOrder))
+                {
+                    <li class="d-flex align-items-center gap-2 py-2 border-bottom">
+                        <i class="bi bi-circle-fill text-orange" style="font-size:.4rem;flex-shrink:0"></i>
+                        <span class="fw-semibold">
+                            <span data-qty="@ing.Quantity" class="@(multiplier != 1 ? "scaled" : "")">
+                                @(Math.Round(ing.Quantity * multiplier, 1))
+                            </span>
+                            @ing.Unit
+                        </span>
+                        <span>@ing.Name</span>
+                        @if (ing.IsOptional) { <span class="tag tag-country" style="font-size:.7rem">optional</span> }
+                        @if (!string.IsNullOrEmpty(ing.Notes)) { <span class="text-muted small">(@ing.Notes)</span> }
+                    </li>
+                }
+            </ul>
+
+            <!-- Alternative Ingredients -->
+            @if (Model.AlternativeIngredients.Any())
+            {
+                <div class="mt-3 p-3 rounded-3" style="background:var(--light-2)">
+                    <div class="fw-bold mb-2">💡 Alternative Ingredients</div>
+                    @foreach (var alt in Model.AlternativeIngredients)
+                    {
+                        <div class="small mb-1">
+                            <span class="text-muted">@alt.OriginalIngredientName</span>
+                            <i class="bi bi-arrow-right text-orange mx-1"></i>
+                            <strong>@alt.SubstituteName</strong>
+                            @if (!string.IsNullOrEmpty(alt.Reason))
+                            { <span class="text-muted"> — @alt.Reason</span> }
+                            @if (alt.CostSavingPercent > 0)
+                            { <span class="tag tag-green ms-1" style="font-size:.7rem">-@alt.CostSavingPercent%</span> }
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- ── Steps ──── -->
+            <h2 class="section-heading mt-5">Method</h2>
+            @foreach (var step in Model.Steps)
+            {
+                <div class="d-flex gap-3 mb-4 fade-up">
+                    <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle fw-bold text-white"
+                         style="width:40px;height:40px;background:var(--orange);font-family:var(--font-display)">
+                        @step.StepOrder
+                    </div>
+                    <div class="flex-grow-1 pt-1">
+                        <p class="mb-1">@step.Instruction</p>
+                        @if (step.DurationMinutes.HasValue)
+                        { <span class="tag tag-orange"><i class="bi bi-hourglass-split"></i> @step.DurationMinutes min</span> }
+                        @if (!string.IsNullOrEmpty(step.ChefTip))
+                        {
+                            <div class="mt-2 small p-2 rounded-2"
+                                 style="background:#FFF0E6;border-left:3px solid var(--orange)">
+                                <i class="bi bi-lightbulb text-orange"></i> <strong>Chef tip:</strong> @step.ChefTip
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- ── Embedded YouTube Video ──── -->
+            @if (!string.IsNullOrEmpty(ytEmbed))
+            {
+                <h2 class="section-heading mt-5">📺 Watch How It's Made</h2>
+                <div class="video-container mb-3">
+                    <div class="ratio ratio-16x9">
+                        <iframe src="@ytEmbed"
+                                title="@(ytMeta?.Title ?? Model.Title)"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen
+                                loading="lazy">
+                        </iframe>
+                    </div>
+                </div>
+                @if (ytMeta != null)
+                {
+                    <div class="video-stats">
+                        <span><i class="bi bi-eye"></i> @ytMeta.ViewCount.ToString("N0") views</span>
+                        <span><i class="bi bi-hand-thumbs-up"></i> @ytMeta.LikeCount.ToString("N0") likes</span>
+                        <span><i class="bi bi-person-circle"></i> @ytMeta.ChannelName</span>
+                        <span><i class="bi bi-clock"></i> @ytMeta.Duration</span>
+                    </div>
+                    <p class="small text-muted">
+                        <i class="bi bi-info-circle"></i>
+                        Views and likes are counted on the creator's YouTube channel.
+                    </p>
+                }
+            }
+
+            <!-- ── Nutrition ──── -->
+            @if (Model.NutritionInfo.Any())
+            {
+                <h2 class="section-heading mt-5">🥗 Nutrition Per Serving</h2>
+                <div class="row g-2">
+                    @foreach (var n in Model.NutritionInfo.OrderByDescending(x => x.DailyValuePercent).Take(8))
+                    {
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 rounded-3 text-center" style="background:var(--light-2)">
+                                <div class="fw-bold">@n.AmountPer100g@n.Unit</div>
+                                <div class="small text-muted">@n.NutrientCategory</div>
+                                <div class="mt-2">
+                                    <div class="level-bar">
+                                        <div class="level-bar-fill"
+                                             style="width:@Math.Min(100,(double)n.DailyValuePercent)%"></div>
+                                    </div>
+                                    <div class="small text-muted mt-1">@n.DailyValuePercent% DV</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- ── Comments ──── -->
+            <h2 class="section-heading mt-5">
+                💬 Comments
+                <span class="badge bg-orange ms-2 fs-6">@Model.CommentCount</span>
+            </h2>
+
+            <div id="comment-list">
+                @foreach (var c in Model.Comments)
+                {
+                    <partial name="_Comment" model="c" />
+                }
+            </div>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="mt-3">
+                    <textarea id="comment-body" class="form-control mb-2" rows="3"
+                              placeholder="Share your thoughts, tips, or how yours turned out… 🍳"></textarea>
+                    <div class="d-flex justify-content-end">
+                        <button class="btn btn-orange" id="post-comment-btn"
+                                data-recipe-id="@Model.Id">
+                            Post Comment
+                        </button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="p-3 rounded-3 text-center" style="background:var(--orange-light)">
+                    <a asp-controller="Account" asp-action="Login">Sign in</a> to leave a comment.
+                </div>
+            }
+
+            <!-- ── Cook Log Form ──── -->
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div id="cook-log-form" class="mt-5 p-4 rounded-3" style="background:var(--light-2)">
+                    <h5 class="fw-bold mb-3">🍳 Log This Cook</h5>
+                    <form asp-controller="Recipe" asp-action="LogCook" method="post" id="cook-log-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="recipeId" value="@Model.Id" />
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Rating</label>
+                                <select name="rating" class="form-select">
+                                    @for (int i = 5; i >= 1; i--)
+                                    {
+                                        <option value="@i">@string.Concat(Enumerable.Repeat("⭐", i))</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Photo URL (optional)</label>
+                                <input name="photoUrl" type="url" class="form-control"
+                                       placeholder="https://…" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Notes (optional)</label>
+                                <textarea name="note" class="form-control" rows="2"
+                                          placeholder="What did you change? How did it turn out?"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-orange">
+                                    <i class="bi bi-check2-circle"></i> Save Cook Log
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            }
+        </div>
+
+        <!-- ════ RIGHT — Sidebar ═════════════════════════════════ -->
+        <div class="col-lg-4">
+
+            <!-- Quick Stats -->
+            <div class="bg-white rounded-3 p-4 shadow-sm mb-4">
+                <div class="row g-3 text-center">
+                    @{
+                        var qstats = new[] {
+                            ("⏱️", Model.PrepTimeMinutes + " min", "Prep"),
+                            ("🔥", Model.CookTimeMinutes + " min", "Cook"),
+                            ("👥", Model.Servings.ToString(), "Serves"),
+                            ("📊", Model.DifficultyLevel.ToString(), "Level"),
+                        };
+                    }
+                    @foreach (var (icon, val, label) in qstats)
+                    {
+                        <div class="col-6">
+                            <div class="p-2 rounded-2" style="background:var(--light-2)">
+                                <div style="font-size:1.4rem">@icon</div>
+                                <div class="fw-bold">@val</div>
+                                <div class="small text-muted">@label</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Cost Breakdown -->
+            @if (costInfo != null)
+            {
+                <div class="bg-white rounded-3 p-4 shadow-sm mb-4">
+                    <h6 class="fw-bold mb-3">🛒 Ingredient Cost</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Total (@Model.Servings servings)</span>
+                        <strong>@costInfo.CurrencySymbol@costInfo.TotalCost.ToString("F2")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Per serving</span>
+                        <strong>@costInfo.CurrencySymbol@costInfo.CostPerServing.ToString("F2")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Budget tier</span>
+                        <span class="cost-tier-@costInfo.BudgetTier.ToLower()">
+                            @(costInfo.BudgetTier == "Cheap" ? "💚 Budget-Friendly" :
+                              costInfo.BudgetTier == "Premium" ? "🔴 Premium" : "🟡 Moderate")
+                        </span>
+                    </div>
+                </div>
+            }
+
+            <!-- Rankings -->
+            @if (rankings.Any())
+            {
+                <div class="bg-white rounded-3 p-4 shadow-sm mb-4">
+                    <h6 class="fw-bold mb-3">🏆 Rankings</h6>
+                    @foreach (var rk in rankings.Take(4))
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <div class="small fw-semibold">@rk.Scope</div>
+                                @if (!string.IsNullOrEmpty(rk.ScopeValue))
+                                {<div class="small text-muted">@rk.ScopeValue</div>}
+                            </div>
+                            <div class="rank-badge @(rk.RankPosition <= 3 ? $"rank-{rk.RankPosition}" : "rank-n")">
+                                #@rk.RankPosition
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Related YouTube Videos -->
+            @if (relVideos.Any())
+            {
+                <div class="bg-white rounded-3 p-4 shadow-sm mb-4">
+                    <h6 class="fw-bold mb-3">📺 Related Videos</h6>
+                    @foreach (var v in relVideos.Take(3))
+                    {
+                        <div class="d-flex gap-2 mb-3">
+                            <div style="width:80px;height:55px;border-radius:8px;overflow:hidden;flex-shrink:0">
+                                <img src="@v.ThumbnailUrl" style="width:100%;height:100%;object-fit:cover" />
+                            </div>
+                            <div>
+                                <a href="javascript:void(0)"
+                                   onclick="loadYouTubeVideo('@v.VideoId')"
+                                   class="small fw-semibold text-dark d-block"
+                                   style="-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">
+                                    @v.Title
+                                </a>
+                                <div class="small text-muted">@v.ChannelName · @v.Duration</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+// Comment posting via SignalR
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl('/hubs/recipe').withAutomaticReconnect().build();
+
+connection.on('NewComment', data => {
+    const list = document.getElementById('comment-list');
+    list?.insertAdjacentHTML('beforeend', renderComment(data));
+});
+
+connection.start().then(() => {
+    connection.invoke('JoinRecipeRoom', @Model.Id);
+});
+
+document.getElementById('post-comment-btn')?.addEventListener('click', () => {
+    const body = document.getElementById('comment-body')?.value?.trim();
+    if (!body) return;
+    connection.invoke('SendComment', @Model.Id, body, null);
+    const ta = document.getElementById('comment-body');
+    if (ta) ta.value = '';
+});
+
+function renderComment(c) {
+    return `<div class="d-flex gap-3 py-3 border-bottom">
+        <div class="avatar-sm flex-shrink-0">${c.userName?.[0] ?? '?'}</div>
+        <div>
+            <div class="fw-semibold small">${c.userName}</div>
+            <p class="mb-1">${c.body}</p>
+            <div class="small text-muted">Just now</div>
+        </div>
+    </div>`;
+}
+
+function loadYouTubeVideo(videoId) {
+    const container = document.querySelector('.video-container .ratio');
+    if (!container) return;
+    container.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen></iframe>`;
+    document.querySelector('.video-container')?.scrollIntoView({ behavior: 'smooth' });
+}
+
+function shareRecipe() {
+    if (navigator.share) {
+        navigator.share({ title: '@Html.Raw(Model.Title)', url: window.location.href });
+    } else {
+        navigator.clipboard.writeText(window.location.href);
+        showToast?.('Link copied! 📋');
+    }
+}
+</script>
+}

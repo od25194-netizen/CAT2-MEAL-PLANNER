@@ -1,0 +1,190 @@
+@* ═══ Recipe/Index.cshtml — Browse & Search ══════════════════════ *@
+@using MyMealPlanner.Core.Enums
+@model List<MyMealPlanner.Core.Models.Recipe>
+@{
+    ViewData["Title"] = "All Recipes";
+    int totalCount  = (int)(ViewBag.TotalCount  ?? 0);
+    int currentPage = (int)(ViewBag.CurrentPage ?? 1);
+    int totalPages  = (int)(ViewBag.TotalPages  ?? 1);
+    string? query   = ViewBag.Query as string;
+    var scope       = (DiscoveryScope)(ViewBag.Scope ?? DiscoveryScope.Global);
+}
+
+<div class="container-xl py-4">
+    <div class="row g-4">
+
+        <!-- ══ Filters Sidebar ════════════════════════════════════ -->
+        <div class="col-lg-3">
+            <div class="bg-white rounded-3 shadow-sm p-4 sticky-top" style="top:80px">
+                <h6 class="fw-bold mb-3">🔍 Filter Recipes</h6>
+                <form method="get" asp-action="Index">
+
+                    <!-- Search -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Search</label>
+                        <input name="q" type="text" class="form-control form-control-sm"
+                               value="@query" placeholder="Dish, ingredient, country…" />
+                    </div>
+
+                    <!-- Scope -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Discovery</label>
+                        <select name="scope" class="form-select form-select-sm">
+                            @foreach (DiscoveryScope s in Enum.GetValues<DiscoveryScope>())
+                            { <option value="@s" selected="@(s == scope)">@s</option> }
+                        </select>
+                    </div>
+
+                    <!-- Meal Type -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Meal Type</label>
+                        <select name="mealType" class="form-select form-select-sm">
+                            <option value="">Any</option>
+                            @foreach (MealType mt in Enum.GetValues<MealType>())
+                            { <option value="@mt">@mt</option> }
+                        </select>
+                    </div>
+
+                    <!-- Cooking Environment -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Environment</label>
+                        <select name="environment" class="form-select form-select-sm">
+                            <option value="">Any</option>
+                            @foreach (CookingEnvironment ce in Enum.GetValues<CookingEnvironment>())
+                            { <option value="@ce">@ce</option> }
+                        </select>
+                    </div>
+
+                    <!-- Difficulty -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Difficulty</label>
+                        <select name="difficulty" class="form-select form-select-sm">
+                            <option value="">Any</option>
+                            @foreach (DifficultyLevel d in Enum.GetValues<DifficultyLevel>())
+                            { <option value="@d">@d</option> }
+                        </select>
+                    </div>
+
+                    <!-- Max Time -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Max Cook Time</label>
+                        <select name="maxTime" class="form-select form-select-sm">
+                            <option value="">Any</option>
+                            <option value="15">Under 15 min</option>
+                            <option value="30">Under 30 min</option>
+                            <option value="60">Under 1 hour</option>
+                            <option value="120">Under 2 hours</option>
+                        </select>
+                    </div>
+
+                    <!-- Diet -->
+                    <div class="mb-4">
+                        <label class="form-label small fw-semibold">Dietary</label>
+                        <select name="diet" class="form-select form-select-sm">
+                            <option value="">Any</option>
+                            @foreach (var d in new[] {"Vegan","Vegetarian","Halal","Kosher","Gluten-Free","Dairy-Free"})
+                            { <option value="@d">@d</option> }
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-orange w-100 btn-sm">Apply Filters</button>
+                    <a asp-action="Index" class="btn btn-outline-orange w-100 btn-sm mt-2">Clear All</a>
+                </form>
+            </div>
+        </div>
+
+        <!-- ══ Recipe Grid ════════════════════════════════════════ -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div>
+                    <h1 class="h3 mb-0">
+                        @if (!string.IsNullOrEmpty(query))
+                        { <span>Results for "<strong>@query</strong>"</span> }
+                        else
+                        { <span>@scope Recipes</span> }
+                    </h1>
+                    <div class="text-muted small">@totalCount.ToString("N0") recipes found</div>
+                </div>
+                <!-- Search by image -->
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-orange btn-sm" id="search-toggle">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                    <button class="btn btn-outline-orange btn-sm" id="img-search-trigger">
+                        <i class="bi bi-camera"></i> Search by Photo
+                    </button>
+                    <input type="file" id="img-search-file" accept="image/*" class="d-none" />
+                </div>
+            </div>
+
+            @if (Model.Any())
+            {
+                <div class="row g-3">
+                    @foreach (var recipe in Model)
+                    {
+                        <div class="col-6 col-md-4 fade-up stagger-@(Model.IndexOf(recipe) % 6 + 1)">
+                            <partial name="_RecipeCard" model="recipe" />
+                        </div>
+                    }
+                </div>
+
+                <!-- Pagination -->
+                @if (totalPages > 1)
+                {
+                    <div class="d-flex justify-content-center gap-1 mt-5 flex-wrap">
+                        @if (currentPage > 1)
+                        {
+                            <a asp-action="Index" asp-route-page="@(currentPage-1)" asp-route-q="@query"
+                               class="btn btn-outline-orange btn-sm">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        }
+                        @for (int p = Math.Max(1, currentPage - 2); p <= Math.Min(totalPages, currentPage + 2); p++)
+                        {
+                            <a asp-action="Index" asp-route-page="@p" asp-route-q="@query"
+                               class="btn btn-sm @(p == currentPage ? "btn-orange" : "btn-outline-orange")">@p</a>
+                        }
+                        @if (currentPage < totalPages)
+                        {
+                            <a asp-action="Index" asp-route-page="@(currentPage+1)" asp-route-q="@query"
+                               class="btn btn-outline-orange btn-sm">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <div style="font-size:3rem">🔍</div>
+                    <h3 class="display-font mt-3">No recipes found</h3>
+                    <p class="text-muted">Try different filters or
+                        <a asp-action="Index" class="text-orange">browse all recipes</a>
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section Scripts {
+<script>
+document.getElementById('img-search-trigger')?.addEventListener('click', () =>
+    document.getElementById('img-search-file')?.click());
+document.getElementById('img-search-file')?.addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('image', file);
+    const resp = await fetch('/api/search/image', {
+        method: 'POST',
+        headers: { 'RequestVerificationToken': document.querySelector('[name=__RequestVerificationToken]')?.value || '' },
+        body: fd
+    });
+    const data = await resp.json();
+    if (data.identifiedDish)
+        window.location = `/Recipe?q=${encodeURIComponent(data.identifiedDish)}`;
+});
+</script>
+@Html.AntiForgeryToken()
+}

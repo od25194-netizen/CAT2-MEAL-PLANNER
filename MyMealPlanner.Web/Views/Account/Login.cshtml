@@ -1,0 +1,81 @@
+@* ═══════════════════════════════════════════════════════════════
+   Login.cshtml
+   ═══════════════════════════════════════════════════════════════ *@
+@model MyMealPlanner.Web.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Sign In";
+    var providers = ViewBag.ExternalProviders as List<Microsoft.AspNetCore.Authentication.AuthenticationScheme> ?? new();
+}
+
+<div class="container py-5" style="max-width:460px">
+    <div class="text-center mb-4">
+        <div style="font-size:3rem">🍽️</div>
+        <h1 class="display-font" style="font-size:2rem">Welcome Back</h1>
+        <p class="text-muted">Sign in to My Meal Planner</p>
+    </div>
+
+    <!-- OAuth -->
+    @if (providers.Any())
+    {
+        <div class="d-flex flex-column gap-2 mb-4">
+            @foreach (var p in providers)
+            {
+                <form asp-action="ExternalLogin" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="provider" value="@p.Name" />
+                    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                    <button type="submit"
+                            class="btn @(p.Name == "Google" ? "btn-outline-secondary" : "") w-100 d-flex align-items-center justify-content-center gap-2"
+                            style="@(p.Name == "Facebook" ? "background:#1877F2;color:white;border:none" : "")">
+                        <i class="bi bi-@p.Name.ToLower()"></i> Continue with @p.Name
+                    </button>
+                </form>
+            }
+        </div>
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <hr class="flex-grow-1" /><span class="text-muted small">or</span><hr class="flex-grow-1" />
+        </div>
+    }
+
+    <div class="bg-white rounded-3 p-4 shadow-sm">
+        <form asp-action="Login" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ReturnUrl" />
+            <div asp-validation-summary="All" class="alert alert-danger py-2 small mb-3" style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">Email Address</label>
+                <input asp-for="Email" class="form-control" type="email"
+                       placeholder="you@example.com" autocomplete="email" autofocus />
+            </div>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label asp-for="Password" class="form-label mb-0">Password</label>
+                    <a asp-controller="Account" asp-action="ForgotPassword"
+                       class="small text-orange">Forgot password?</a>
+                </div>
+                <div class="input-group">
+                    <input asp-for="Password" class="form-control" type="password"
+                           id="login-pwd" autocomplete="current-password" />
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="var i=document.getElementById('login-pwd');i.type=i.type==='password'?'text':'password'">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="form-check">
+                    <input asp-for="RememberMe" class="form-check-input" type="checkbox" />
+                    <label asp-for="RememberMe" class="form-check-label small">Remember me for 14 days</label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-orange w-100 py-2">Sign In</button>
+        </form>
+    </div>
+
+    <div class="text-center mt-4 text-muted small">
+        New here?
+        <a asp-controller="Account" asp-action="Register" class="text-orange fw-semibold">Create a free account</a>
+    </div>
+</div>
