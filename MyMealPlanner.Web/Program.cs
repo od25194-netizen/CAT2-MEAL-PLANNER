@@ -38,7 +38,9 @@ try
         .WriteTo.Console());
 
     // ── Database (SQLite for dev, SQL Server for prod) ──────
-    var connStr = builder.Configuration.GetConnectionString("DefaultConnection")!;
+    var rawConnStr = builder.Configuration.GetConnectionString("DefaultConnection")!;
+    var connStr = ParsePostgresUri(rawConnStr);
+
     if (connStr.Contains(".db") || connStr.StartsWith("Data Source"))
     {
         builder.Services.AddDbContext<ApplicationDbContext>(o =>
@@ -281,4 +283,24 @@ public class HangfireAuthFilter : Hangfire.Dashboard.IDashboardAuthorizationFilt
     }
 }
 
-public partial class Program { }
+public partial class Program 
+{
+    public static string ParsePostgresUri(string uri)
+    {
+        if (string.IsNullOrEmpty(uri) || !uri.StartsWith("postgres://")) return uri;
+
+        try
+        {
+            var databaseUri = new Uri(uri);
+            var userInfo = databaseUri.UserInfo.Split(':');
+            var user = userInfo[0];
+            var password = userInfo.Length > 1 ? userInfo[1] : "";
+            var host = databaseUri.Host;
+            var port = databaseUri.Port;
+            var database = databaseUri.AbsolutePath.TrimStart('/');
+
+            return $"Host={host};Port={port};Database={database};Username={user};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
+        }
+        catch { return uri; }
+    }
+}
