@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Http;
 using MyMealPlanner.Services.Localization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MyMealPlanner.Core.Enums;
 using MyMealPlanner.Core.Interfaces;
