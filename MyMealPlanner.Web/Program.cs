@@ -218,10 +218,13 @@ try
     }
 
     // ── Middleware ────────────────────────────────────────────
-    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    var forwardedOptions = new ForwardedHeadersOptions
     {
         ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
-    });
+    };
+    forwardedOptions.KnownNetworks.Clear();
+    forwardedOptions.KnownProxies.Clear();
+    app.UseForwardedHeaders(forwardedOptions);
 
     if (app.Environment.IsDevelopment()) app.UseDeveloperExceptionPage();
     else { app.UseExceptionHandler("/Home/Error"); app.UseHsts(); }
