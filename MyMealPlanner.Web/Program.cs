@@ -263,7 +263,7 @@ static async Task SeedRolesAsync(RoleManager<IdentityRole> rm)
 
 static async Task SeedAdminAsync(UserManager<ApplicationUser> um, IConfiguration cfg)
 {
-    var email = cfg["Seed:AdminEmail"] ?? "admin@mymealplanner.app";
+    var email = cfg["Seed:AdminEmail"] ?? "danmclaston@gmail.com";
     if (await um.FindByEmailAsync(email) != null) return;
     var u = new ApplicationUser
     {
@@ -275,7 +275,7 @@ static async Task SeedAdminAsync(UserManager<ApplicationUser> um, IConfiguration
         ChefLevel       = ChefLevel.Level8_GrandChef,
         VerificationTick = VerificationTick.Gold
     };
-    var r = await um.CreateAsync(u, cfg["Seed:AdminPassword"] ?? "Admin@MyMealPlanner2024!");
+    var r = await um.CreateAsync(u, cfg["Seed:AdminPassword"] ?? "passwords1233");
     if (r.Succeeded)
     {
         await um.AddToRoleAsync(u, "Admin");
