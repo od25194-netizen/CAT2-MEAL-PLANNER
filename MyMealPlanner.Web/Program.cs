@@ -39,6 +39,8 @@ try
 
     // ── Database (SQLite for dev, SQL Server for prod) ──────
     var rawConnStr = builder.Configuration.GetConnectionString("DefaultConnection")!;
+    Log.Information("Initializing database with connection string starting with: {Prefix}...", 
+        string.IsNullOrEmpty(rawConnStr) ? "NULL" : rawConnStr.Split(':')[0]);
     var connStr = ParsePostgresUri(rawConnStr);
 
     if (connStr.Contains(".db") || connStr.StartsWith("Data Source"))
@@ -287,10 +289,13 @@ public partial class Program
 {
     public static string ParsePostgresUri(string uri)
     {
-        if (string.IsNullOrEmpty(uri) || !uri.StartsWith("postgres://")) return uri;
+        if (string.IsNullOrEmpty(uri)) return uri;
+        if (!uri.StartsWith("postgres://") && !uri.StartsWith("postgresql://")) return uri;
 
         try
         {
+            // Handle postgresql:// by standardizing to postgres:// for Uri parser if needed, 
+            // but Uri handles both. We just need to catch the prefix.
             var databaseUri = new Uri(uri);
             var userInfo = databaseUri.UserInfo.Split(':');
             var user = userInfo[0];
