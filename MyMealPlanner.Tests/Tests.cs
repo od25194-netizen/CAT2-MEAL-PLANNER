@@ -290,7 +290,7 @@ public class AITaggerServiceTests
 
         var tags = await _svc.AutoTagAsync(recipe);
 
-        tags.Difficulty.Should().BeGreaterThanOrEqualTo(DifficultyLevel.Advanced);
+        ((int)tags.Difficulty).Should().BeGreaterThanOrEqualTo((int)DifficultyLevel.Advanced);
     }
 
     [Fact]
