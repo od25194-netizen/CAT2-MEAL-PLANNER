@@ -512,7 +512,7 @@ public class QuizController : Controller
 
         ViewBag.CurrentLevel = user.ChefLevel;
         ViewBag.NextLevel    = user.ChefLevel < ChefLevel.Level8_GrandChef
-            ? user.ChefLevel + 1 : null;
+            ? (ChefLevel?)(user.ChefLevel + 1) : null;
         ViewBag.LastAttempt  = lastAttempt;
         ViewBag.CanAttempt   = lastAttempt?.NextAttemptAllowedAt is null ||
                                 lastAttempt.NextAttemptAllowedAt <= DateTime.UtcNow;

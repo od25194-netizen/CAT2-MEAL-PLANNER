@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyMealPlanner.Core.Enums;
 using MyMealPlanner.Core.Models;
 using MyMealPlanner.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using MyMealPlanner.Web.ViewModels;
 using System.Security.Claims;
 using System.Text.Encodings.Web;

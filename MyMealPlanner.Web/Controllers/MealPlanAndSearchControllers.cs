@@ -212,7 +212,7 @@ public class MealPlanController : Controller
             .SelectMany(i => i.Recipe.Ingredients.Select(ing => new
             {
                 ing.Name, ing.Unit,
-                Quantity = ing.Quantity * ((double)i.Servings / i.Recipe.Servings)
+                Quantity = ing.Quantity * (decimal)((double)i.Servings / i.Recipe.Servings)
             }))
             .GroupBy(x => (x.Name, x.Unit))
             .Select(g => new ShoppingListItem
