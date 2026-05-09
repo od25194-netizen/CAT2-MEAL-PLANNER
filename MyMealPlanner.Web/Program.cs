@@ -301,7 +301,7 @@ public partial class Program
             var user = userInfo[0];
             var password = userInfo.Length > 1 ? userInfo[1] : "";
             var host = databaseUri.Host;
-            var port = databaseUri.Port;
+            var port = databaseUri.Port == -1 ? 5432 : databaseUri.Port;
             var database = databaseUri.AbsolutePath.TrimStart('/');
 
             return $"Host={host};Port={port};Database={database};Username={user};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
