@@ -676,3 +676,35 @@ public class FoodTimingGuide
     public string Reason                    { get; set; } = string.Empty;
     public string? WorkoutType              { get; set; }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// EQUIPMENT & INVENTORY
+// ═══════════════════════════════════════════════════════════════
+public class CookingEquipment
+{
+    public int Id                   { get; set; }
+    public string Name              { get; set; } = string.Empty;
+    public string Category          { get; set; } = string.Empty; // e.g., Cutlery, Cookware, Appliance
+    public string? Description      { get; set; }
+    public string? ImageUrl         { get; set; }
+    public string? CleaningSteps    { get; set; }
+    public string? MaintenanceTips  { get; set; }
+    public DateTime CreatedAt       { get; set; } = DateTime.UtcNow;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SPECIALIZED DIET PLANS
+// ═══════════════════════════════════════════════════════════════
+public class DietPlan
+{
+    public int Id                   { get; set; }
+    public string PlanName          { get; set; } = string.Empty; // e.g., Vegan, Keto, Diabetic
+    public string Description       { get; set; } = string.Empty;
+    public string MealsJson         { get; set; } = "[]";
+    public int TargetCalories       { get; set; }
+    public string? MacrosJson       { get; set; }
+    public string? HealthBenefits   { get; set; }
+    public bool IsGlobal            { get; set; } = true;
+    public string? Region           { get; set; }
+    public DateTime CreatedAt       { get; set; } = DateTime.UtcNow;
+}

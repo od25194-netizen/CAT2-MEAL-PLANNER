@@ -43,6 +43,7 @@ public class ContentNormalizerService : IContentNormalizerService
             {
                 "Reddit"  => NormalizeRedditPost(raw),
                 "Blog"    => NormalizeBlogHtml(raw),
+                "Health"  => NormalizeHealthArticle(raw),
                 _         => NormalizeSchemaOrg(raw)   // Website / YouTube description
             };
         }
@@ -51,6 +52,15 @@ public class ContentNormalizerService : IContentNormalizerService
             _logger.LogWarning(ex, "[Normalizer] Failed to normalize {Url}", raw.SourceUrl);
             return null;
         }
+    }
+
+    private Recipe? NormalizeHealthArticle(ScrapedRaw raw)
+    {
+        // This is a placeholder for a more complex extraction logic.
+        // In a real scenario, we would use AI to extract recipes from health articles
+        // or create FoodHealthBenefit records.
+        // For now, we return null to avoid cluttering the Recipe table with non-recipes.
+        return null;
     }
 
     // ── Schema.org JSON-LD ────────────────────────────────────

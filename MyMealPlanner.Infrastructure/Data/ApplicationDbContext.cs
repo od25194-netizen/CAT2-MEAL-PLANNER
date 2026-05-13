@@ -65,6 +65,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ScrapeJob>   ScrapeJobs  => Set<ScrapeJob>();
     public DbSet<ScrapedRaw>  ScrapedRaws => Set<ScrapedRaw>();
 
+    // ── Inventory & Diet ──────────────────────────────────────
+    public DbSet<CookingEquipment> CookingEquipment => Set<CookingEquipment>();
+    public DbSet<DietPlan>         DietPlans        => Set<DietPlan>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

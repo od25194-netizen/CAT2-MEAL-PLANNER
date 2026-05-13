@@ -173,33 +173,42 @@
                 </div>
             }
 
-            <!-- ── Embedded YouTube Video ──── -->
+            <!-- ── Premium Video Experience ──── -->
             @if (!string.IsNullOrEmpty(ytEmbed))
             {
-                <h2 class="section-heading mt-5">📺 Watch How It's Made</h2>
-                <div class="video-container mb-3">
-                    <div class="ratio ratio-16x9">
-                        <iframe src="@ytEmbed"
-                                title="@(ytMeta?.Title ?? Model.Title)"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowfullscreen
-                                loading="lazy">
-                        </iframe>
+                <div class="video-section mt-5 fade-up" id="video-anchor">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="section-heading mb-0">📺 Watch Step-by-Step</h2>
+                        <button class="btn btn-sm btn-outline-dark rounded-pill" onclick="toggleCinemaMode()">
+                            <i class="bi bi-aspect-ratio"></i> Cinema Mode
+                        </button>
                     </div>
+                    
+                    <div class="video-wrapper shadow-lg rounded-4 overflow-hidden border">
+                        <div class="ratio ratio-16x9">
+                            <iframe src="@ytEmbed?rel=0&modestbranding=1"
+                                    id="main-video-iframe"
+                                    title="@(ytMeta?.Title ?? Model.Title)"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen
+                                    loading="lazy">
+                            </iframe>
+                        </div>
+                    </div>
+
+                    @if (ytMeta != null)
+                    {
+                        <div class="bg-light p-3 rounded-bottom-4 border-top d-flex justify-content-between align-items-center">
+                            <div class="d-flex gap-3 small text-muted">
+                                <span><i class="bi bi-eye"></i> @ytMeta.ViewCount.ToString("N0")</span>
+                                <span><i class="bi bi-hand-thumbs-up"></i> @ytMeta.LikeCount.ToString("N0")</span>
+                            </div>
+                            <div class="fw-bold small">
+                                <i class="bi bi-person-circle"></i> @ytMeta.ChannelName
+                            </div>
+                        </div>
+                    }
                 </div>
-                @if (ytMeta != null)
-                {
-                    <div class="video-stats">
-                        <span><i class="bi bi-eye"></i> @ytMeta.ViewCount.ToString("N0") views</span>
-                        <span><i class="bi bi-hand-thumbs-up"></i> @ytMeta.LikeCount.ToString("N0") likes</span>
-                        <span><i class="bi bi-person-circle"></i> @ytMeta.ChannelName</span>
-                        <span><i class="bi bi-clock"></i> @ytMeta.Duration</span>
-                    </div>
-                    <p class="small text-muted">
-                        <i class="bi bi-info-circle"></i>
-                        Views and likes are counted on the creator's YouTube channel.
-                    </p>
-                }
             }
 
             <!-- ── Nutrition ──── -->
@@ -432,12 +441,51 @@ function renderComment(c) {
 }
 
 function loadYouTubeVideo(videoId) {
-    const container = document.querySelector('.video-container .ratio');
-    if (!container) return;
-    container.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen></iframe>`;
-    document.querySelector('.video-container')?.scrollIntoView({ behavior: 'smooth' });
+    const iframe = document.getElementById('main-video-iframe');
+    if (!iframe) {
+        // If player doesn't exist, scroll to anchor or redirect
+        window.location.hash = 'video-anchor';
+        return;
+    }
+    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+    document.getElementById('video-anchor')?.scrollIntoView({ behavior: 'smooth' });
+}
+
+function toggleCinemaMode() {
+    const wrapper = document.querySelector('.video-wrapper');
+    const isCinema = wrapper.classList.toggle('cinema-mode');
+    
+    if (isCinema) {
+        document.body.style.overflow = 'hidden';
+        wrapper.style.position = 'fixed';
+        wrapper.style.top = '0';
+        wrapper.style.left = '0';
+        wrapper.style.width = '100vw';
+        wrapper.style.height = '100vh';
+        wrapper.style.zIndex = '9999';
+        wrapper.style.borderRadius = '0';
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.id = 'close-cinema';
+        closeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+        closeBtn.className = 'btn btn-light rounded-circle shadow';
+        closeBtn.style.position = 'fixed';
+        closeBtn.style.top = '20px';
+        closeBtn.style.right = '20px';
+        closeBtn.style.zIndex = '10000';
+        closeBtn.onclick = toggleCinemaMode;
+        document.body.appendChild(closeBtn);
+    } else {
+        document.body.style.overflow = '';
+        wrapper.style.position = '';
+        wrapper.style.top = '';
+        wrapper.style.left = '';
+        wrapper.style.width = '';
+        wrapper.style.height = '';
+        wrapper.style.zIndex = '';
+        wrapper.style.borderRadius = '';
+        document.getElementById('close-cinema')?.remove();
+    }
 }
 
 function shareRecipe() {

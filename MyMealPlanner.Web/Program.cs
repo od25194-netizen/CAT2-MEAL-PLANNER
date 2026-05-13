@@ -38,9 +38,15 @@ try
         .WriteTo.Console());
 
     // ── Database (SQLite for dev, SQL Server for prod) ──────
-    var rawConnStr = builder.Configuration.GetConnectionString("DefaultConnection")!;
+    var rawConnStr = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrWhiteSpace(rawConnStr))
+    {
+        Log.Fatal("DefaultConnection is not configured. Set CONNECTIONSTRINGS__DEFAULTCONNECTION env var (PostgreSQL URI or connection string).");
+        throw new InvalidOperationException("DefaultConnection is required. Configure it via environment variables or appsettings.");
+    }
+
     Log.Information("Initializing database with connection string starting with: {Prefix}...", 
-        string.IsNullOrEmpty(rawConnStr) ? "NULL" : rawConnStr.Split(':')[0]);
+        rawConnStr.Split(':')[0]);
     var connStr = ParsePostgresUri(rawConnStr);
 
     if (connStr.Contains(".db") || connStr.StartsWith("Data Source"))
@@ -61,6 +67,24 @@ try
         builder.Services.AddDbContext<ApplicationDbContext>(o =>
             o.UseSqlServer(connStr,
                 sql => sql.MigrationsAssembly("MyMealPlanner.Infrastructure")));
+    }
+
+    // ── Validate Production Configuration ─────────────────────
+    if (!builder.Environment.IsDevelopment())
+    {
+        var missing = new List<string>();
+        if (string.IsNullOrWhiteSpace(builder.Configuration["Auth:Google:ClientId"]) || 
+            builder.Configuration["Auth:Google:ClientId"] == "YOUR_GOOGLE_CLIENT_ID")
+            missing.Add("Auth:Google:ClientId");
+        if (string.IsNullOrWhiteSpace(builder.Configuration["OpenAI:ApiKey"]) || 
+            builder.Configuration["OpenAI:ApiKey"] == "YOUR_OPENAI_OR_CLAUDE_KEY")
+            missing.Add("OpenAI:ApiKey");
+        if (string.IsNullOrWhiteSpace(builder.Configuration["Email:Password"]) || 
+            builder.Configuration["Email:Password"] == "YOUR_APP_PASSWORD")
+            missing.Add("Email:Password");
+
+        if (missing.Count > 0)
+            Log.Warning("Production detected but these critical config keys are missing or placeholder: {MissingKeys}. Some features may not work.", string.Join(", ", missing));
     }
 
     // ── Identity ─────────────────────────────────────────────
@@ -202,6 +226,7 @@ try
     builder.Services.AddScoped<PdfExportService>();
     builder.Services.AddScoped<NearbyFoodService>();
     builder.Services.AddScoped<IEmailService,             EmailService>();
+    builder.Services.AddScoped<IRecipePromotionService,   RecipePromotionService>();
 
     var app = builder.Build();
 

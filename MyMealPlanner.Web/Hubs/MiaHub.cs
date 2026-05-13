@@ -58,7 +58,7 @@ public class MiaHub : Hub
                 timestamp = DateTime.UtcNow.ToString("o")
             });
         }
-        catch (Exception ex)
+        catch
         {
             await Clients.Caller.SendAsync("MiaTyping",   false);
             await Clients.Caller.SendAsync("MiaResponse", new

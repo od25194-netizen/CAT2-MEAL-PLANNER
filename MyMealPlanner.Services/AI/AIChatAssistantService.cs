@@ -48,12 +48,89 @@ public class AIChatAssistantService : IAIChatAssistantService
         var user = await _db.Users.FindAsync(userId);
         var systemPrompt = BuildSystemPrompt(user);
 
-        // Try providers in cost order
-        return await TryGroqAsync(systemPrompt, message, history)
+        // Try providers in cost/capability order
+        return await TryDeepSeekAsync(systemPrompt, message, history)
+            ?? await TryQwenAsync(systemPrompt, message, history)
+            ?? await TryGroqAsync(systemPrompt, message, history)
             ?? await TryOllamaAsync(systemPrompt, message, history)
             ?? await TryOpenRouterAsync(systemPrompt, message, history)
             ?? await TryClaudeAsync(systemPrompt, message, history)
             ?? FallbackResponse(message);
+    }
+
+    // ── DeepSeek-V3 (High-performance Chinese AI) ─────────────
+    private async Task<string?> TryDeepSeekAsync(
+        string systemPrompt, string message, List<ChatTurn> history)
+    {
+        var apiKey = _config["AI:DeepSeekApiKey"];
+        if (string.IsNullOrEmpty(apiKey)) return null;
+
+        try
+        {
+            var messages = BuildMessages(systemPrompt, message, history);
+            var body = JsonSerializer.Serialize(new
+            {
+                model    = "deepseek-chat",
+                messages,
+                max_tokens = 800,
+                temperature = 0.7
+            });
+
+            _http.DefaultRequestHeaders.Clear();
+            _http.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+
+            var resp = await _http.PostAsync(
+                "https://api.deepseek.com/v1/chat/completions",
+                new StringContent(body, Encoding.UTF8, "application/json"));
+
+            if (!resp.IsSuccessStatusCode) return null;
+
+            var json = await resp.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[Mia] DeepSeek failed");
+            return null;
+        }
+    }
+
+    // ── Alibaba Qwen (Multi-lingual & Culinary knowledge) ─────
+    private async Task<string?> TryQwenAsync(
+        string systemPrompt, string message, List<ChatTurn> history)
+    {
+        var apiKey = _config["AI:DashScopeApiKey"]; // Alibaba's API gateway
+        if (string.IsNullOrEmpty(apiKey)) return null;
+
+        try
+        {
+            var messages = BuildMessages(systemPrompt, message, history);
+            var body = JsonSerializer.Serialize(new
+            {
+                model    = "qwen-max",
+                input = new { messages },
+                parameters = new { result_format = "message" }
+            });
+
+            _http.DefaultRequestHeaders.Clear();
+            _http.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+
+            var resp = await _http.PostAsync(
+                "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
+                new StringContent(body, Encoding.UTF8, "application/json"));
+
+            if (!resp.IsSuccessStatusCode) return null;
+
+            var json = await resp.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.GetProperty("output").GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[Mia] Qwen failed");
+            return null;
+        }
     }
 
     // ── System Prompt Builder ─────────────────────────────────

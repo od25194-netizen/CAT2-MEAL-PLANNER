@@ -56,6 +56,10 @@ public static class DatabaseSeeder
         await SeedBadgesAsync(db);
         await SeedScrapeJobsAsync(db);
         await SeedJokesAsync(db);
+        await SeedRecipesAsync(db);
+        await SeedQuizQuestionsAsync(db);
+        await SeedDietPlansAsync(db);
+        await SeedEquipmentAsync(db);
         await db.SaveChangesAsync();
     }
 
@@ -201,6 +205,9 @@ public static class DatabaseSeeder
             ("Reddit Recipes",  "https://reddit.com/r/recipes",                  "Reddit"),
             ("Reddit Cooking",  "https://reddit.com/r/Cooking",                  "Reddit"),
             ("Reddit WorldFood","https://reddit.com/r/worldcuisine",             "Reddit"),
+            ("Healthline Nutrition", "https://www.healthline.com/nutrition",      "Health"),
+            ("Medical News Today",   "https://www.medicalnewstoday.com/categories/food-nutrition", "Health"),
+            ("NutritionFacts",       "https://nutritionfacts.org/topics/",        "Health"),
             ("Joke Source 1",   "https://www.punpedia.com/food-puns/",            "Jokes"),
             ("Joke Source 2",   "https://jokes4us.com/foodjokes/",               "Jokes"),
         };
@@ -249,5 +256,170 @@ public static class DatabaseSeeder
                 CreatedAt  = DateTime.UtcNow
             });
         }
+    private static async Task SeedRecipesAsync(ApplicationDbContext db)
+    {
+        if (await db.Recipes.AnyAsync()) return;
+
+        var recipes = new List<Recipe>
+        {
+            new() {
+                Title = "Nigerian Jollof Rice",
+                Slug = "nigerian-jollof-rice",
+                Description = "A vibrant and flavorful one-pot rice dish that is a staple in West Africa.",
+                CulturalStory = "Jollof rice is more than just food in Nigeria; it's a centerpiece of celebrations and the subject of friendly 'Jollof wars' between West African nations.",
+                OriginCountry = "Nigeria",
+                OriginCountryCode = "NG",
+                OriginContinent = "Africa",
+                MealType = MealType.MainCourse,
+                DifficultyLevel = DifficultyLevel.Medium,
+                PrepTimeMinutes = 15,
+                CookTimeMinutes = 45,
+                IsPublished = true,
+                IsApproved = true,
+                IsFeatured = true,
+                CreatedAt = DateTime.UtcNow
+            },
+            new() {
+                Title = "Japanese Ramen (Shoyu Style)",
+                Slug = "japanese-ramen-shoyu",
+                Description = "Rich and savory soy sauce-based noodle soup with various toppings.",
+                CulturalStory = "Ramen has evolved from a simple street food to a culinary art form in Japan, with countless regional variations.",
+                OriginCountry = "Japan",
+                OriginCountryCode = "JP",
+                OriginContinent = "Asia",
+                MealType = MealType.MainCourse,
+                DifficultyLevel = DifficultyLevel.Hard,
+                PrepTimeMinutes = 30,
+                CookTimeMinutes = 120,
+                IsPublished = true,
+                IsApproved = true,
+                IsFeatured = true,
+                CreatedAt = DateTime.UtcNow
+            },
+            new() {
+                Title = "Classic Italian Margherita Pizza",
+                Slug = "classic-margherita-pizza",
+                Description = "The iconic pizza with tomato sauce, fresh mozzarella, and basil.",
+                CulturalStory = "Legend has it that the Margherita pizza was created in 1889 to honor the Queen of Italy, Margherita of Savoy.",
+                OriginCountry = "Italy",
+                OriginCountryCode = "IT",
+                OriginContinent = "Europe",
+                MealType = MealType.MainCourse,
+                DifficultyLevel = DifficultyLevel.Medium,
+                PrepTimeMinutes = 20,
+                CookTimeMinutes = 15,
+                IsPublished = true,
+                IsApproved = true,
+                CreatedAt = DateTime.UtcNow
+            },
+            new() {
+                Title = "Mexican Street Tacos",
+                Slug = "mexican-street-tacos",
+                Description = "Simple yet delicious corn tortillas filled with grilled meat, onions, and cilantro.",
+                CulturalStory = "Tacos are the soul of Mexican street food culture, bringing people together at all hours of the day.",
+                OriginCountry = "Mexico",
+                OriginCountryCode = "MX",
+                OriginContinent = "Americas",
+                MealType = MealType.MainCourse,
+                DifficultyLevel = DifficultyLevel.Easy,
+                PrepTimeMinutes = 20,
+                CookTimeMinutes = 10,
+                IsPublished = true,
+                IsApproved = true,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        db.Recipes.AddRange(recipes);
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SeedQuizQuestionsAsync(ApplicationDbContext db)
+    {
+        if (await db.QuizQuestions.AnyAsync()) return;
+
+        db.QuizQuestions.AddRange(
+            new QuizQuestion {
+                QuestionText = "Which nutrient is primarily responsible for building and repairing tissues in the body?",
+                AnswersJson = "[\"Carbohydrates\", \"Fats\", \"Protein\", \"Vitamin C\"]",
+                CorrectAnswer = "Protein",
+                Difficulty = DifficultyLevel.Easy,
+                MinLevel = ChefLevel.Level1_KitchenNewcomer,
+                NutrientCategory = NutrientCategory.Protein
+            },
+            new QuizQuestion {
+                QuestionText = "Which of these is a rich source of Vitamin C?",
+                AnswersJson = "[\"Beef\", \"Eggs\", \"Bell Pepper\", \"Milk\"]",
+                CorrectAnswer = "Bell Pepper",
+                Difficulty = DifficultyLevel.Easy,
+                MinLevel = ChefLevel.Level1_KitchenNewcomer,
+                NutrientCategory = NutrientCategory.VitaminC
+            },
+            new QuizQuestion {
+                QuestionText = "In which country did Margherita Pizza originate?",
+                AnswersJson = "[\"France\", \"Spain\", \"Italy\", \"Greece\"]",
+                CorrectAnswer = "Italy",
+                Difficulty = DifficultyLevel.Easy,
+                MinLevel = ChefLevel.Level1_KitchenNewcomer,
+                CultureTag = "Italian"
+            }
+        );
+        await db.SaveChangesAsync();
+    private static async Task SeedDietPlansAsync(ApplicationDbContext db)
+    {
+        if (await db.DietPlans.AnyAsync()) return;
+
+        db.DietPlans.AddRange(
+            new DietPlan {
+                PlanName = "Vegan Discovery",
+                Description = "A vibrant plant-based journey exploring global flavors without any animal products.",
+                TargetCalories = 1800,
+                HealthBenefits = "Improved heart health, weight management, and environmental impact.",
+                MealsJson = "[\"Tofu & Broccoli Stir-fry\",\"Red Lentil Dahl\",\"Quinoa Salad with Roasted Chickpeas\"]"
+            },
+            new DietPlan {
+                PlanName = "Low Carb / Keto",
+                Description = "Focus on healthy fats and protein while minimizing sugars and starches.",
+                TargetCalories = 2000,
+                HealthBenefits = "Stable blood sugar, increased focus, and efficient fat burning.",
+                MealsJson = "[\"Grilled Salmon with Asparagus\",\"Chicken Caesar Salad (no croutons)\",\"Avocado & Egg Breakfast Bowl\"]"
+            },
+            new DietPlan {
+                PlanName = "Diabetic Friendly",
+                Description = "Balanced meals with slow-releasing carbohydrates to maintain steady glucose levels.",
+                TargetCalories = 1900,
+                HealthBenefits = "Glucose stability and long-term metabolic health.",
+                MealsJson = "[\"Steel-cut Oats with Berries\",\"Baked Cod with Steamed Greens\",\"Turkey & Lentil Soup\"]"
+            }
+        );
+    }
+
+    private static async Task SeedEquipmentAsync(ApplicationDbContext db)
+    {
+        if (await db.CookingEquipment.AnyAsync()) return;
+
+        db.CookingEquipment.AddRange(
+            new CookingEquipment {
+                Name = "Chef's Knife",
+                Category = "Cutlery",
+                Description = "The most versatile tool in the kitchen for chopping, slicing, and dicing.",
+                CleaningSteps = "Hand wash with warm soapy water immediately after use. Never put in dishwasher.",
+                MaintenanceTips = "Hone regularly with a steel and sharpen every 6-12 months."
+            },
+            new CookingEquipment {
+                Name = "Cast Iron Skillet",
+                Category = "Cookware",
+                Description = "Excellent heat retention for searing and even cooking.",
+                CleaningSteps = "Rinse with hot water and a brush. Dry completely over heat.",
+                MaintenanceTips = "Apply a thin layer of oil after each use to maintain the 'seasoning'."
+            },
+            new CookingEquipment {
+                Name = "High-Speed Blender",
+                Category = "Appliance",
+                Description = "Perfect for smoothies, soups, and sauces.",
+                CleaningSteps = "Fill halfway with warm water and a drop of soap, run for 30 seconds, then rinse.",
+                MaintenanceTips = "Check blade sharpness and motor base for spills regularly."
+            }
+        );
     }
 }

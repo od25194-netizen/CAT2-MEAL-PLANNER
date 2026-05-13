@@ -55,11 +55,22 @@
             <div class="col-lg-5 d-none d-lg-block">
                 <div class="fade-up stagger-2 d-flex flex-column gap-3">
                     @{
+                        int liveRecipes    = (int)(ViewBag.TotalRecipes      ?? 0);
+                        int liveUsers      = (int)(ViewBag.TotalUsers         ?? 0);
+                        int liveCountries  = (int)(ViewBag.CountriesCovered   ?? 0);
+                        int liveContinents = (int)(ViewBag.ContinentsCovered  ?? 0);
+
                         var stats = new[] {
-                            ("🍽️", "Recipes & Growing", "Daily scraped + community"),
-                            ("🌍", "Countries Covered", "Every continent represented"),
-                            ("👨‍🍳", "Chef Levels", "From Newcomer to Grand Chef"),
-                            ("🏆", "Global Rankings", "Updated every 3 hours"),
+                            ("🍽️",
+                             liveRecipes  > 0 ? $"{liveRecipes:N0} Recipes" : "Recipes & Growing",
+                             liveRecipes  > 0 ? "Live • grows every day"    : "Daily scraped + community"),
+                            ("🌍",
+                             liveCountries > 0 ? $"{liveCountries} Countries" : "195 Countries",
+                             liveContinents> 0 ? $"Across {liveContinents} continents" : "Every continent"),
+                            ("👨‍🍳",
+                             liveUsers > 0 ? $"{liveUsers:N0} Members" : "Chef Levels",
+                             liveUsers > 0 ? "Cooks worldwide" : "Newcomer to Grand Chef"),
+                            ("🏆", "Global Rankings", "Recalculated every 3 hrs"),
                         };
                     }
                     @foreach (var (icon, title, sub) in stats)

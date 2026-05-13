@@ -30,46 +30,80 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index()
     {
-        // Detect user's discovery scope from profile or IP
         var user          = await _userManager.GetUserAsync(User);
         var countryCode   = user?.CountryCode;
         var continentCode = user?.ContinentCode;
 
-        // Trending globally
-        var globalTrending = await _ranking.GetTrendingThisWeekAsync(null, 8);
+        // ── Live platform stats ───────────────────────────────
+        var totalRecipes  = await _db.Recipes.CountAsync(r => r.IsPublished);
+        var totalUsers    = await _db.Users.CountAsync(u => !u.IsDeleted);
+        var countriesCovered = await _db.Recipes
+            .Where(r => r.IsPublished && r.OriginCountryCode != null)
+            .Select(r => r.OriginCountryCode)
+            .Distinct()
+            .CountAsync();
+        var continentsCovered = await _db.Recipes
+            .Where(r => r.IsPublished && r.OriginContinent != null)
+            .Select(r => r.OriginContinent)
+            .Distinct()
+            .CountAsync();
 
-        // Trending in user's country
-        var localTrending = countryCode is not null
+        // ── Trending ──────────────────────────────────────────
+        var globalTrending = await _ranking.GetTrendingThisWeekAsync(null, 8);
+        var localTrending  = countryCode is not null
             ? await _ranking.GetTrendingThisWeekAsync(countryCode, 6)
             : new List<Core.Models.DishRanking>();
 
-        // Featured recent recipes
+        // ── Featured recipes ──────────────────────────────────
         var featured = await _db.Recipes
             .Where(r => r.IsPublished && r.IsFeatured)
             .OrderByDescending(r => r.CreatedAt)
             .Take(6)
             .ToListAsync();
 
-        // New recipes added today
+        // ── If no featured, fall back to top-liked ────────────
+        if (!featured.Any())
+        {
+            featured = await _db.Recipes
+                .Where(r => r.IsPublished)
+                .OrderByDescending(r => r.LikeCount)
+                .Take(6)
+                .ToListAsync();
+        }
+
+        // ── New today (or recent if none today) ───────────────
         var newToday = await _db.Recipes
             .Where(r => r.IsPublished && r.CreatedAt >= DateTime.UtcNow.AddHours(-24))
             .OrderByDescending(r => r.CreatedAt)
             .Take(12)
             .ToListAsync();
 
-        // Daily joke
+        if (!newToday.Any())
+        {
+            newToday = await _db.Recipes
+                .Where(r => r.IsPublished)
+                .OrderByDescending(r => r.CreatedAt)
+                .Take(8)
+                .ToListAsync();
+        }
+
+        // ── Random joke ───────────────────────────────────────
         var joke = await _db.CookingJokes
             .Where(j => j.IsApproved)
-            .OrderBy(_ => Guid.NewGuid()) // random
+            .OrderBy(_ => Guid.NewGuid())
             .FirstOrDefaultAsync();
 
-        ViewBag.GlobalTrending  = globalTrending;
-        ViewBag.LocalTrending   = localTrending;
-        ViewBag.Featured        = featured;
-        ViewBag.NewToday        = newToday;
-        ViewBag.DailyJoke       = joke;
-        ViewBag.CountryCode     = countryCode;
-        ViewBag.ContinentCode   = continentCode;
+        ViewBag.GlobalTrending    = globalTrending;
+        ViewBag.LocalTrending     = localTrending;
+        ViewBag.Featured          = featured;
+        ViewBag.NewToday          = newToday;
+        ViewBag.DailyJoke         = joke;
+        ViewBag.CountryCode       = countryCode;
+        ViewBag.ContinentCode     = continentCode;
+        ViewBag.TotalRecipes      = totalRecipes;
+        ViewBag.TotalUsers        = totalUsers;
+        ViewBag.CountriesCovered  = countriesCovered;
+        ViewBag.ContinentsCovered = continentsCovered;
 
         return View();
     }

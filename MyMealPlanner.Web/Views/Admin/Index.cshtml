@@ -35,11 +35,11 @@
     <div class="row g-3 mb-5">
         @{
             var actions = new[] {
-                ("Review Suggestions",    "bi-lightbulb",   "Suggestions",      "Index",    "btn-orange"),
-                ("Recipe Review Queue",   "bi-eye",         "Admin",            "ReviewQueue","btn-outline-orange"),
-                ("Manage Users",          "bi-people",      "Admin",            "Users",     "btn-outline-orange"),
+                ("Content Moderation",    "bi-shield-check","Admin",            "Moderation",    "btn-orange"),
+                ("Manage Users",          "bi-people",      "Admin",            "Users",         "btn-outline-orange"),
                 ("Scraper Monitor",       "bi-activity",    "Admin",            "ScraperMonitor","btn-outline-orange"),
-                ("Hangfire Jobs",         "bi-gear-wide",   "",                 "",          "btn-outline-orange"),
+                ("Bulk Data Import",      "bi-cloud-upload","Admin",            "BulkImport",    "btn-orange"),
+                ("Hangfire Jobs",         "bi-gear-wide",   "",                 "",              "btn-outline-orange"),
             };
         }
         @foreach (var (label, icon, ctrl, action, btnClass) in actions)

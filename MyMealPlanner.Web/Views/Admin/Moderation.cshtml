@@ -1,0 +1,113 @@
+@{ ViewData["Title"] = "Content Moderation Hub"; }
+@using MyMealPlanner.Core.Models
+
+<div class="container-xl py-4">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h1 class="display-font mb-1">🛡️ Moderation Hub</h1>
+            <p class="text-muted">Review and approve incoming culinary content.</p>
+        </div>
+        <div class="nav nav-pills bg-white p-1 rounded-pill shadow-sm" id="moderationTabs">
+            <a class="nav-link rounded-pill px-4 @(ViewBag.ActiveTab == "suggestions" ? "active bg-orange" : "text-dark")" 
+               href="?tab=suggestions">User Suggestions</a>
+            <a class="nav-link rounded-pill px-4 @(ViewBag.ActiveTab == "scraped" ? "active bg-orange" : "text-dark")" 
+               href="?tab=scraped">Scraped Content</a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-4 shadow-sm overflow-hidden">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-4">Content Info</th>
+                    <th>Source / Author</th>
+                    <th>Submitted</th>
+                    <th class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (ViewBag.ActiveTab == "scraped")
+                {
+                    var recipes = Model as List<Recipe>;
+                    @foreach (var item in recipes ?? new List<Recipe>())
+                    {
+                        <tr id="row-@item.Id">
+                            <td class="ps-4">
+                                <div class="fw-bold">@item.Title</div>
+                                <div class="small text-muted">@item.Summary?.Substring(0, Math.Min(50, item.Summary.Length))...</div>
+                            </td>
+                            <td><span class="badge bg-light text-dark fw-normal border">@item.SourcePlatform</span></td>
+                            <td>@item.CreatedAt.ToShortDateString()</td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-success rounded-pill px-3 me-1" onclick="moderate(@item.Id, 'recipe', true)">Approve</button>
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="moderate(@item.Id, 'recipe', false)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    var suggestions = Model as List<RecipeSuggestion>;
+                    @foreach (var item in suggestions ?? new List<RecipeSuggestion>())
+                    {
+                        <tr id="row-@item.Id">
+                            <td class="ps-4">
+                                <div class="fw-bold">@item.Title</div>
+                                <div class="small text-muted">@item.Category</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar-sm">@item.SubmittedByUser?.FullName[0]</div>
+                                    <span class="small">@item.SubmittedByUser?.FullName</span>
+                                </div>
+                            </td>
+                            <td>@item.SubmittedAt.ToShortDateString()</td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-orange rounded-pill px-3 me-1" onclick="moderate(@item.Id, 'suggestion', true)">Promote</button>
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="moderate(@item.Id, 'suggestion', false)">Reject</button>
+                            </td>
+                        </tr>
+                    }
+                }
+                
+                @if (!((IEnumerable<dynamic>)Model).Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center py-5">
+                            <div class="display-1 mb-3">🎉</div>
+                            <h5 class="fw-bold">All caught up!</h5>
+                            <p class="text-muted">No pending content in this queue.</p>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function moderate(id, type, approve) {
+            if (!approve && !confirm('Are you sure you want to reject/delete this?')) return;
+            
+            $.post('@Url.Action("ModerateContent", "Admin")', {
+                id: id,
+                type: type,
+                approve: approve,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            }, function(res) {
+                if (res.success) {
+                    $('#row-' + id).fadeOut(300, function() { $(this).remove(); });
+                } else {
+                    alert('Error: ' + res.message);
+                }
+            });
+        }
+    </script>
+}
+
+<style>
+    .bg-orange { background: #E8630A !important; }
+    .btn-orange { background: #E8630A; color: white; }
+    .avatar-sm { width: 24px; height: 24px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: bold; }
+</style>

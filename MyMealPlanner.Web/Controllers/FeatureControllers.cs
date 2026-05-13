@@ -6,6 +6,7 @@ using MyMealPlanner.Core.Enums;
 using MyMealPlanner.Core.Interfaces;
 using MyMealPlanner.Core.Models;
 using MyMealPlanner.Infrastructure.Data;
+using MyMealPlanner.Services;
 
 namespace MyMealPlanner.Web.Controllers;
 
@@ -22,6 +23,18 @@ public class HealthController : Controller
 
     // Eat Healthy hub home
     public IActionResult Index() => View();
+
+    public async Task<IActionResult> DietPlans()
+    {
+        var plans = await _db.DietPlans.OrderBy(p => p.PlanName).ToListAsync();
+        return View(plans);
+    }
+
+    public async Task<IActionResult> Allergies()
+    {
+        var guides = await _db.AllergyGuides.OrderBy(a => a.AllergenType).ToListAsync();
+        return View(guides);
+    }
 
     // ── Nutrient Navigator — click a nutrient, see all foods ──
     public async Task<IActionResult> Nutrients(NutrientCategory? category)
@@ -353,9 +366,14 @@ public class AdminController : Controller
 {
     private readonly ApplicationDbContext _db;
     private readonly UserManager<ApplicationUser> _users;
+    private readonly IRecipePromotionService _promotion;
 
-    public AdminController(ApplicationDbContext db, UserManager<ApplicationUser> users)
-    { _db = db; _users = users; }
+    public AdminController(ApplicationDbContext db, UserManager<ApplicationUser> users, IRecipePromotionService promotion)
+    { 
+        _db = db; 
+        _users = users;
+        _promotion = promotion;
+    }
 
     public async Task<IActionResult> Index()
     {
@@ -379,46 +397,77 @@ public class AdminController : Controller
         return View();
     }
 
-    // ── Recipe Suggestions Review ─────────────────────────────
-    public async Task<IActionResult> Suggestions(SuggestionStatus status = SuggestionStatus.Pending)
+    // ── Unified Moderation Hub ───────────────────────────────
+    public async Task<IActionResult> Moderation(string tab = "suggestions", int page = 1)
     {
-        var suggestions = await _db.RecipeSuggestions
-            .Include(s => s.SubmittedByUser)
-            .Where(s => s.Status == status)
-            .OrderBy(s => s.SubmittedAt)
-            .ToListAsync();
-        ViewBag.Status = status;
-        return View(suggestions);
+        int pageSize = 20;
+        ViewBag.ActiveTab = tab.ToLower();
+
+        if (tab.ToLower() == "scraped")
+        {
+            var total = await _db.Recipes.CountAsync(r => !r.IsApproved);
+            var items = await _db.Recipes
+                .Where(r => !r.IsApproved)
+                .Include(r => r.SubmittedByUser)
+                .OrderBy(r => r.CreatedAt)
+                .Skip((page - 1) * pageSize).Take(pageSize)
+                .ToListAsync();
+            ViewBag.TotalPages = (int)Math.Ceiling((double)total / pageSize);
+            return View(items);
+        }
+        else
+        {
+            var total = await _db.RecipeSuggestions.CountAsync(s => s.Status == SuggestionStatus.Pending);
+            var items = await _db.RecipeSuggestions
+                .Include(s => s.SubmittedByUser)
+                .Where(s => s.Status == SuggestionStatus.Pending)
+                .OrderBy(s => s.SubmittedAt)
+                .Skip((page - 1) * pageSize).Take(pageSize)
+                .ToListAsync();
+            ViewBag.TotalPages = (int)Math.Ceiling((double)total / pageSize);
+            return View(items);
+        }
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> ApproveSuggestion(int id, string? note)
+    public async Task<IActionResult> ModerateContent(int id, string type, bool approve, string? note)
     {
-        var suggestion = await _db.RecipeSuggestions.FindAsync(id);
-        if (suggestion is null) return NotFound();
+        string userId = _users.GetUserId(User)!;
 
-        suggestion.Status         = SuggestionStatus.Approved;
-        suggestion.ReviewNote     = note;
-        suggestion.ReviewedByAdminId = _users.GetUserId(User);
-        suggestion.ReviewedAt     = DateTime.UtcNow;
+        if (type == "suggestion")
+        {
+            var suggestion = await _db.RecipeSuggestions.FindAsync(id);
+            if (suggestion == null) return NotFound();
 
-        // Promote to published recipe
-        // RecipePromotionService.PromoteAsync(suggestion) — wire in production
+            if (approve)
+            {
+                suggestion.Status = SuggestionStatus.Approved;
+                await _promotion.PromoteAsync(suggestion);
+            }
+            else
+            {
+                suggestion.Status = SuggestionStatus.Rejected;
+            }
+            suggestion.ReviewNote = note;
+            suggestion.ReviewedByAdminId = userId;
+            suggestion.ReviewedAt = DateTime.UtcNow;
+        }
+        else if (type == "recipe")
+        {
+            var recipe = await _db.Recipes.FindAsync(id);
+            if (recipe == null) return NotFound();
 
-        await _db.SaveChangesAsync();
-        return Json(new { success = true });
-    }
+            if (approve)
+            {
+                recipe.IsApproved = true;
+                recipe.IsPublished = true;
+            }
+            else
+            {
+                _db.Recipes.Remove(recipe); // Rejecting an unpublished recipe deletes it
+            }
+        }
 
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> RejectSuggestion(int id, string reason)
-    {
-        var suggestion = await _db.RecipeSuggestions.FindAsync(id);
-        if (suggestion is null) return NotFound();
-
-        suggestion.Status         = SuggestionStatus.Rejected;
-        suggestion.ReviewNote     = reason;
-        suggestion.ReviewedByAdminId = _users.GetUserId(User);
-        suggestion.ReviewedAt     = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return Json(new { success = true });
     }
@@ -445,31 +494,50 @@ public class AdminController : Controller
         return View(users);
     }
 
-    // ── Unpublished Recipes Queue ─────────────────────────────
-    public async Task<IActionResult> ReviewQueue(int page = 1)
-    {
-        int pageSize = 20;
-        var total = await _db.Recipes.CountAsync(r => !r.IsApproved);
-        var recipes = await _db.Recipes
-            .Where(r => !r.IsApproved)
-            .Include(r => r.SubmittedByUser)
-            .OrderBy(r => r.CreatedAt)
-            .Skip((page - 1) * pageSize).Take(pageSize)
-            .ToListAsync();
-
-        ViewBag.TotalPages  = (int)Math.Ceiling((double)total / pageSize);
-        ViewBag.CurrentPage = page;
-        return View(recipes);
-    }
+    // ── Bulk Import ───────────────────────────────────────────
+    public IActionResult BulkImport() => View();
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> PublishRecipe(int id)
+    public async Task<IActionResult> BulkImport(string dataType, string jsonData)
     {
-        await _db.Recipes.Where(r => r.Id == id)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(r => r.IsApproved,  true)
-                .SetProperty(r => r.IsPublished, true));
-        return Json(new { success = true });
+        if (string.IsNullOrWhiteSpace(jsonData)) return Json(new { success = false, message = "JSON data is empty" });
+
+        try
+        {
+            var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+            switch (dataType.ToLower())
+            {
+                case "recipes":
+                    var recipes = System.Text.Json.JsonSerializer.Deserialize<List<Recipe>>(jsonData, options);
+                    if (recipes != null) { _db.Recipes.AddRange(recipes); await _db.SaveChangesAsync(); }
+                    break;
+                case "quizzes":
+                    var quizzes = System.Text.Json.JsonSerializer.Deserialize<List<QuizQuestion>>(jsonData, options);
+                    if (quizzes != null) { _db.QuizQuestions.AddRange(quizzes); await _db.SaveChangesAsync(); }
+                    break;
+                case "allergies":
+                    var allergies = System.Text.Json.JsonSerializer.Deserialize<List<AllergyGuide>>(jsonData, options);
+                    if (allergies != null) { _db.AllergyGuides.AddRange(allergies); await _db.SaveChangesAsync(); }
+                    break;
+                case "diets":
+                    var diets = System.Text.Json.JsonSerializer.Deserialize<List<DietPlan>>(jsonData, options);
+                    if (diets != null) { _db.DietPlans.AddRange(diets); await _db.SaveChangesAsync(); }
+                    break;
+                case "equipment":
+                    var equipment = System.Text.Json.JsonSerializer.Deserialize<List<CookingEquipment>>(jsonData, options);
+                    if (equipment != null) { _db.CookingEquipment.AddRange(equipment); await _db.SaveChangesAsync(); }
+                    break;
+                default:
+                    return Json(new { success = false, message = "Invalid data type" });
+            }
+
+            return Json(new { success = true, message = "Import successful" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = $"Error: {ex.Message}" });
+        }
     }
 
     // ── Scraper Monitor ───────────────────────────────────────

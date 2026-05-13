@@ -63,6 +63,7 @@ public class RecipeScraperService : IRecipeScraperService
         await ScrapeSchemaOrgSitesAsync(ct);
         await ScrapeRedditAsync(ct);
         await ScrapeYouTubeFoodChannelsAsync(ct);
+        await ScrapeHealthResourcesAsync(ct);
 
         foreach (var continent in new[] { "AF", "AS", "EU", "NA", "SA", "OC" })
             await ScrapeFoodBlogsByRegionAsync(continent, ct);
@@ -207,6 +208,71 @@ public class RecipeScraperService : IRecipeScraperService
         }
 
         await _db.SaveChangesAsync(ct);
+    }
+
+    // ── Health & Nutrition Resources ──────────────────────────
+    public async Task ScrapeHealthResourcesAsync(CancellationToken ct = default)
+    {
+        var healthJobs = await _db.ScrapeJobs
+            .Where(j => j.Platform == "Health" && j.IsActive && j.NextRunAt <= DateTime.UtcNow)
+            .ToListAsync(ct);
+
+        foreach (var job in healthJobs)
+        {
+            try
+            {
+                var html = await FetchWithRetryAsync(job.Url, ct);
+                if (html is null) continue;
+
+                var doc = new HtmlDocument();
+                doc.LoadHtml(html);
+
+                // Look for articles or list items that describe food benefits
+                var articles = doc.DocumentNode.SelectNodes("//article | //div[contains(@class,'article')] | //li[contains(@class,'topic')]");
+                if (articles == null) continue;
+
+                foreach (var node in articles.Take(10))
+                {
+                    var text = node.InnerText.Trim();
+                    if (string.IsNullOrEmpty(text) || text.Length < 50) continue;
+
+                    // Simple logic: If text contains "benefit", "good for", "helps", "treats"
+                    if (text.Contains("benefit", StringComparison.OrdinalIgnoreCase) || 
+                        text.Contains("good for", StringComparison.OrdinalIgnoreCase) ||
+                        text.Contains("helps", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var hash = GenerateHash(text);
+                        if (await _db.ScrapedRaws.AnyAsync(r => r.ContentHash == hash, ct)) continue;
+
+                        _db.ScrapedRaws.Add(new ScrapedRaw
+                        {
+                            RawJson = JsonSerializer.Serialize(new { text = text }),
+                            SourceUrl = job.Url,
+                            Platform = "Health",
+                            ContentHash = hash
+                        });
+
+                        // Directly create a simple health benefit entry
+                        // In production, AI would split this into Condition and FoodRemedy
+                        _db.FoodHealthBenefits.Add(new FoodHealthBenefit
+                        {
+                            Condition = "General Health",
+                            FoodRemedy = text.Length > 200 ? text[..200] + "..." : text,
+                            HowToUse = "Extracted from research article",
+                            SourceReference = job.Source
+                        });
+                    }
+                }
+
+                job.LastRunAt = DateTime.UtcNow;
+                job.NextRunAt = DateTime.UtcNow.AddHours(24);
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Scraper] Health source {Url} failed", job.Url);
+            }
+        }
     }
 
     // ── Food Blogs by Region ──────────────────────────────────

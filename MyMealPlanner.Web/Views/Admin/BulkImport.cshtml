@@ -1,0 +1,116 @@
+@{ ViewData["Title"] = "Bulk Data Import"; }
+
+<div class="container-xl py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px; background: #1A1A2E;">
+                <div class="card-header bg-transparent border-0 p-4 text-center">
+                    <div class="display-font text-white fs-2 mb-2">🚀 Bulk Data Import</div>
+                    <p class="text-white-50">Upload JSON datasets to populate recipes, quizzes, and more.</p>
+                </div>
+                <div class="card-body p-4 p-lg-5">
+                    <form id="importForm" method="post">
+                        @Html.AntiForgeryToken()
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">1. Select Data Type</label>
+                            <select name="dataType" id="dataType" class="form-select bg-white border-0 py-3 rounded-3" required>
+                                <option value="recipes">Recipes (Bulk JSON)</option>
+                                <option value="quizzes">Quiz Questions</option>
+                                <option value="allergies">Allergy Guides</option>
+                                <option value="diets">Balanced Diet Plans</option>
+                                <option value="equipment">Cooking Equipment</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">2. Paste JSON Array</label>
+                            <textarea name="jsonData" id="jsonData" class="form-control bg-white border-0 py-3 rounded-3 font-monospace" 
+                                      rows="12" placeholder='[ { "title": "Recipe Name", ... }, ... ]' required></textarea>
+                            <div class="form-text text-white-50 mt-2">
+                                <i class="bi bi-info-circle me-1"></i> Ensure the JSON exactly matches the model property names (case-insensitive).
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-5">
+                            <button type="submit" id="submitBtn" class="btn btn-orange btn-lg py-3 fw-bold rounded-pill shadow-sm">
+                                <i class="bi bi-cloud-arrow-up me-2"></i> Execute Import
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="statusMessage" class="mt-4 text-center d-none">
+                        <div class="spinner-border text-orange mb-2" role="status"></div>
+                        <p class="text-white">Processing import, please wait...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <a asp-action="Index" class="btn btn-link text-decoration-none text-white-50">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('#importForm').on('submit', function (e) {
+                e.preventDefault();
+                
+                const btn = $('#submitBtn');
+                const status = $('#statusMessage');
+                const formData = $(this).serialize();
+
+                btn.prop('disabled', true).addClass('opacity-50');
+                status.removeClass('d-none');
+
+                $.ajax({
+                    url: '@Url.Action("BulkImport", "Admin")',
+                    type: 'POST',
+                    data: formData,
+                    success: function (res) {
+                        if (res.success) {
+                            alert('✅ ' + res.message);
+                            $('#jsonData').val('');
+                        } else {
+                            alert('❌ ' + res.message);
+                        }
+                    },
+                    error: function () {
+                        alert('❌ Critical error during import.');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).removeClass('opacity-50');
+                        status.addClass('d-none');
+                    }
+                });
+            });
+        });
+    </script>
+}
+
+<style>
+    body { background: #F8F4EF; }
+    .btn-orange {
+        background: linear-gradient(135deg, #E8630A, #FF8D4D);
+        border: none;
+        color: white;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-orange:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(232, 99, 10, 0.3);
+        color: white;
+    }
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.05);
+        border-top: 4px solid #eee;
+    }
+</style>

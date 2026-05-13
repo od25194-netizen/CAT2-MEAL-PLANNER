@@ -7,6 +7,7 @@ using MyMealPlanner.Core.Models;
 using MyMealPlanner.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using MyMealPlanner.Web.ViewModels;
+using MyMealPlanner.Services.Email;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 
@@ -18,17 +19,20 @@ public class AccountController : Controller
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly ApplicationDbContext _db;
     private readonly ILogger<AccountController> _logger;
+    private readonly IEmailService _email;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         ApplicationDbContext db,
-        ILogger<AccountController> logger)
+        ILogger<AccountController> logger,
+        IEmailService email)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _db = db;
         _logger = logger;
+        _email = email;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -151,14 +155,15 @@ public class AccountController : Controller
         }
 
         // Send confirmation email
-        var token        = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        var confirmUrl   = Url.Action("ConfirmEmail", "Account",
-                               new { userId = user.Id, token }, Request.Scheme)!;
+        var token      = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var confirmUrl = Url.Action("ConfirmEmail", "Account",
+                             new { userId = user.Id, token }, Request.Scheme)!;
 
         _logger.LogInformation("[Register] New user {Email}. Confirm link: {Url}", email, confirmUrl);
-        // IEmailService.SendConfirmationAsync(email, confirmUrl) — wire in production
+        _ = _email.SendEmailConfirmationAsync(email, user.FullName, confirmUrl);
+        _ = _email.SendWelcomeAsync(email, user.FullName);
 
-        TempData["Success"] = $"Welcome to My Meal Planner, {user.FullName}! 🎉 Please check your email to confirm your account.";
+        TempData["Success"] = $"Welcome to My Meal Planner, {user.FullName}! 🎉 Check your email to confirm your account.";
         return RedirectToAction("RegisterConfirmation");
     }
 
@@ -394,12 +399,12 @@ public class AccountController : Controller
             return RedirectToAction("ForgotPasswordConfirmation");
         }
 
-        var token      = await _userManager.GeneratePasswordResetTokenAsync(user);
-        var resetUrl   = Url.Action("ResetPassword", "Account",
-                             new { email = model.Email, token }, Request.Scheme)!;
+        var token    = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var resetUrl = Url.Action("ResetPassword", "Account",
+                           new { email = model.Email, token }, Request.Scheme)!;
 
         _logger.LogInformation("[Password] Reset link for {Email}: {Url}", model.Email, resetUrl);
-        // IEmailService.SendPasswordResetAsync — wire in production
+        _ = _email.SendPasswordResetAsync(model.Email, user.FullName ?? model.Email, resetUrl);
 
         TempData["Success"] = "If that email exists, you'll receive a reset link shortly.";
         return RedirectToAction("ForgotPasswordConfirmation");

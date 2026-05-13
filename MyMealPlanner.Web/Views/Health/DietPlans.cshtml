@@ -1,0 +1,62 @@
+@model List<MyMealPlanner.Core.Models.DietPlan>
+@{ ViewData["Title"] = "Balanced Diet Plans"; }
+
+<div class="container-xl py-5">
+    <div class="text-center mb-5 fade-up">
+        <h1 class="display-font text-dark mb-2">🥗 Balanced Diet Plans</h1>
+        <p class="text-muted lead">Expertly curated meal plans for your specific health goals.</p>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var plan in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm hover-up overflow-hidden" style="border-radius: 20px;">
+                    <div class="card-header bg-orange p-4 text-white border-0">
+                        <h4 class="fw-bold mb-0">@plan.PlanName</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="text-muted small mb-4">@plan.Description</p>
+                        
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <div class="bg-light p-2 rounded-3 text-center" style="min-width: 80px;">
+                                <div class="fw-bold text-orange">@plan.TargetCalories</div>
+                                <div class="small text-muted">kcal/day</div>
+                            </div>
+                            <div class="text-muted small">
+                                <i class="bi bi-shield-check text-green me-1"></i> Health Benefits:<br/>
+                                <span class="fw-semibold text-dark">@plan.HealthBenefits</span>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold mb-2">🍽️ Sample Meals</h6>
+                        <ul class="list-unstyled mb-0">
+                            @{
+                                var meals = System.Text.Json.JsonSerializer.Deserialize<List<string>>(plan.MealsJson ?? "[]");
+                            }
+                            @foreach (var meal in meals ?? new List<string>())
+                            {
+                                <li class="small mb-2 d-flex align-items-center gap-2">
+                                    <i class="bi bi-check2-circle text-orange"></i>
+                                    @meal
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                    <div class="card-footer bg-transparent border-0 p-4 pt-0 text-center">
+                        <button class="btn btn-outline-orange w-100 rounded-pill fw-bold">Select This Plan</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .bg-orange { background: #E8630A; }
+    .text-orange { color: #E8630A; }
+    .btn-outline-orange { border-color: #E8630A; color: #E8630A; }
+    .btn-outline-orange:hover { background: #E8630A; color: white; }
+    .hover-up { transition: transform 0.3s, box-shadow 0.3s; }
+    .hover-up:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important; }
+</style>
