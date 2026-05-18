@@ -146,6 +146,33 @@
                     </a>
                 </li>
 
+                <!-- Culinary Feeds -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle fw-medium" href="#" data-bs-toggle="dropdown">
+                        <i class="bi bi-rss"></i>
+                        <span class="d-none d-xl-inline">Social Feeds</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-rich">
+                        <li class="dropdown-header fw-bold text-uppercase" style="font-size: .75rem; letter-spacing: .05em;">Social Sources</li>
+                        <li><a class="dropdown-item" href="https://www.reddit.com/r/recipes/" target="_blank" rel="noopener">
+                            <i class="bi bi-reddit text-danger"></i> Reddit Recipes</a></li>
+                        <li><a class="dropdown-item" href="https://www.reddit.com/r/Cooking/" target="_blank" rel="noopener">
+                            <i class="bi bi-reddit text-danger"></i> Reddit Cooking</a></li>
+                        <li><a class="dropdown-item" href="https://www.youtube.com/results?search_query=cooking+recipes" target="_blank" rel="noopener">
+                            <i class="bi bi-youtube text-danger"></i> YouTube Cooking</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="dropdown-header fw-bold text-uppercase" style="font-size: .75rem; letter-spacing: .05em;">Web Publishers</li>
+                        <li><a class="dropdown-item" href="https://www.allrecipes.com/" target="_blank" rel="noopener">
+                            <i class="bi bi-globe2 text-primary"></i> AllRecipes</a></li>
+                        <li><a class="dropdown-item" href="https://www.bbcgoodfood.com/" target="_blank" rel="noopener">
+                            <i class="bi bi-globe2 text-success"></i> BBC Good Food</a></li>
+                        <li><a class="dropdown-item" href="https://www.seriouseats.com/" target="_blank" rel="noopener">
+                            <i class="bi bi-globe2 text-warning"></i> Serious Eats</a></li>
+                        <li><a class="dropdown-item" href="https://www.epicurious.com/" target="_blank" rel="noopener">
+                            <i class="bi bi-globe2 text-info"></i> Epicurious</a></li>
+                    </ul>
+                </li>
+
                 @if (User.Identity?.IsAuthenticated == true)
                 {
                     <!-- Notifications -->
