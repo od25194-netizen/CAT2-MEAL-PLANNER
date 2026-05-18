@@ -296,7 +296,7 @@ body { background: #0d0d12; }
                     <form asp-action="ExternalLogin" method="post" class="mb-2">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="provider"  value="@p.Name" />
-                        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                        <input type="hidden" name="returnUrl" value="@Model?.ReturnUrl" />
                         <button type="submit" class="btn-social-dark">
                             @if (p.Name == "Google")
                             {

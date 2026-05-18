@@ -381,7 +381,7 @@ public class AccountController : Controller
         }
 
         foreach (var err in createResult.Errors) ModelState.AddModelError("", err.Description);
-        return View("Login");
+        return View("Login", new LoginViewModel { ReturnUrl = returnUrl });
     }
 
     // ═══════════════════════════════════════════════════════════

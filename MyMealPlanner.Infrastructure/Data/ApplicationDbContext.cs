@@ -1,13 +1,16 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using MyMealPlanner.Core.Models;
 
 namespace MyMealPlanner.Infrastructure.Data;
 
-public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IDataProtectionKeyContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options) { }
+
+    public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
 
     // ── Core ────────────────────────────────────────────────
     public DbSet<Recipe>                Recipes                 => Set<Recipe>();
