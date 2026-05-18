@@ -1,46 +1,73 @@
-@* ═══ Shared/_MiaChat.cshtml — Floating AI Chat Widget ════════════ *@
+@* ═══ Shared/_MiaChat.cshtml — Floating AI Chat Widget (Enhanced) ══ *@
 @if (User.Identity?.IsAuthenticated == true)
 {
 <div id="mia-widget" style="position:fixed;bottom:1.5rem;right:1.5rem;z-index:9000">
+
     <!-- Toggle Button -->
     <button id="mia-toggle" class="btn btn-orange rounded-circle shadow-lg"
             style="width:56px;height:56px;font-size:1.5rem;padding:0"
-            title="Chat with Mia — AI Cooking Assistant">
+            title="Chat with Mia — AI Cooking Assistant"
+            aria-label="Open Mia AI cooking assistant">
         🍳
     </button>
 
     <!-- Chat Panel -->
     <div id="mia-panel"
          style="display:none;position:absolute;bottom:68px;right:0;
-                width:340px;max-height:480px;
+                width:360px;max-height:520px;
                 background:var(--white);border-radius:var(--radius-lg);
                 box-shadow:var(--shadow-lg);overflow:hidden;
-                border:1px solid var(--light-2);flex-direction:column">
+                border:1px solid var(--light-2);flex-direction:column"
+         role="dialog" aria-label="Mia AI cooking assistant">
 
         <!-- Header -->
-        <div style="background:var(--orange);padding:.75rem 1rem;
-                    display:flex;align-items:center;gap:.75rem">
-            <div style="font-size:1.8rem">🍳</div>
-            <div>
+        <div style="background:linear-gradient(135deg,var(--orange-dark),var(--orange));
+                    padding:.75rem 1rem;display:flex;align-items:center;gap:.75rem">
+            <div style="font-size:1.8rem;line-height:1">🍳</div>
+            <div style="flex:1">
                 <div style="color:white;font-weight:700;font-family:var(--font-display)">Mia</div>
-                <div style="color:rgba(255,255,255,.8);font-size:.75rem">Your AI cooking assistant</div>
+                <div style="color:rgba(255,255,255,.8);font-size:.72rem;display:flex;align-items:center;gap:.3rem">
+                    <span style="width:7px;height:7px;background:#4ade80;border-radius:50%;display:inline-block"></span>
+                    Your AI cooking assistant
+                </div>
             </div>
-            <button onclick="document.getElementById('mia-panel').style.display='none'"
-                    style="margin-left:auto;background:none;border:none;color:white;font-size:1.2rem;cursor:pointer">✕</button>
+            <div style="display:flex;gap:.4rem">
+                <button id="mia-clear" title="Clear chat"
+                        style="background:rgba(255,255,255,.2);border:none;color:white;
+                               border-radius:6px;padding:.2rem .4rem;font-size:.75rem;cursor:pointer">
+                    <i class="bi bi-trash"></i>
+                </button>
+                <button onclick="document.getElementById('mia-panel').style.display='none'"
+                        style="background:rgba(255,255,255,.2);border:none;color:white;
+                               border-radius:6px;padding:.2rem .45rem;font-size:1rem;cursor:pointer"
+                        aria-label="Close">✕</button>
+            </div>
+        </div>
+
+        <!-- Quick Prompts (shown when chat is empty) -->
+        <div id="mia-quick-prompts" style="padding:.6rem .75rem;border-bottom:1px solid var(--light-2);
+                                            display:flex;gap:.4rem;flex-wrap:wrap">
+            <button class="mia-quick-prompt" data-prompt="What can I cook with chicken, rice and tomatoes?">🍗 Use what's in my fridge</button>
+            <button class="mia-quick-prompt" data-prompt="Give me a healthy breakfast idea for today">🥗 Healthy meal idea</button>
+            <button class="mia-quick-prompt" data-prompt="What are the health benefits of turmeric?">💊 Food as medicine</button>
+            <button class="mia-quick-prompt" data-prompt="How do I reduce the calories in this meal?">🔥 Cut calories</button>
         </div>
 
         <!-- Messages -->
         <div id="mia-messages"
-             style="flex:1;overflow-y:auto;padding:.75rem;max-height:320px;
-                    display:flex;flex-direction:column;gap:.5rem">
+             style="flex:1;overflow-y:auto;padding:.75rem;max-height:300px;
+                    display:flex;flex-direction:column;gap:.5rem"
+             aria-live="polite">
             <div class="mia-msg mia-msg-bot">
-                👋 Hi! I'm Mia. Ask me anything about recipes, nutrition, ingredients, or cooking techniques. I'm here to help!
+                👋 Hi! I'm <strong>Mia</strong>, your AI cooking assistant.<br>
+                Ask me anything — recipes, nutrition, substitutes, cooking times!
+                <div class="mia-msg-time">Now</div>
             </div>
         </div>
 
         <!-- Typing indicator -->
-        <div id="mia-typing" style="display:none;padding:.5rem .75rem">
-            <div class="mia-msg mia-msg-bot" style="display:inline-flex;gap:.2rem;align-items:center">
+        <div id="mia-typing" style="display:none;padding:.4rem .75rem">
+            <div class="mia-msg mia-msg-bot" style="display:inline-flex;gap:.25rem;align-items:center;padding:.4rem .7rem">
                 <span class="typing-dot"></span>
                 <span class="typing-dot" style="animation-delay:.2s"></span>
                 <span class="typing-dot" style="animation-delay:.4s"></span>
@@ -48,33 +75,47 @@
         </div>
 
         <!-- Input -->
-        <div style="padding:.75rem;border-top:1px solid var(--light-2);display:flex;gap:.5rem">
-            <input type="text" id="mia-input"
-                   style="flex:1;border:2px solid var(--light-2);border-radius:50px;
-                          padding:.4rem .9rem;font-size:.88rem;outline:none"
+        <div style="padding:.65rem .75rem;border-top:1px solid var(--light-2);display:flex;gap:.5rem;align-items:flex-end">
+            <textarea id="mia-input" rows="1"
+                   style="flex:1;border:2px solid var(--light-2);border-radius:12px;
+                          padding:.4rem .9rem;font-size:.88rem;outline:none;
+                          resize:none;line-height:1.4;max-height:90px;overflow-y:auto;
+                          font-family:var(--font-body);background:var(--light)"
                    placeholder="Ask Mia anything…"
                    onfocus="this.style.borderColor='var(--orange)'"
                    onblur="this.style.borderColor='var(--light-2)'"
-                   onkeydown="if(event.key==='Enter'){sendMiaMessage()}" />
+                   aria-label="Message Mia"></textarea>
             <button onclick="sendMiaMessage()"
-                    class="btn btn-orange btn-sm"
-                    style="border-radius:50px;padding:.4rem .85rem">
+                    class="btn btn-orange"
+                    style="border-radius:10px;padding:.45rem .7rem;flex-shrink:0"
+                    aria-label="Send message">
                 <i class="bi bi-send-fill"></i>
             </button>
+        </div>
+
+        <!-- Footer note -->
+        <div style="text-align:center;padding:.3rem;font-size:.68rem;color:var(--mid);border-top:1px solid var(--light-2);background:var(--light)">
+            AI responses may be incorrect. Always verify food safety advice.
         </div>
     </div>
 </div>
 
 <style>
 .mia-msg {
-    max-width:85%;padding:.5rem .85rem;border-radius:14px;font-size:.875rem;line-height:1.5;
+    max-width:88%;padding:.5rem .85rem;border-radius:14px;
+    font-size:.875rem;line-height:1.5;word-break:break-word;
 }
 .mia-msg-bot {
-    background:var(--orange-light);color:var(--dark);align-self:flex-start;border-bottom-left-radius:4px;
+    background:var(--orange-light);color:var(--dark);
+    align-self:flex-start;border-bottom-left-radius:4px;
 }
 .mia-msg-user {
-    background:var(--orange);color:white;align-self:flex-end;border-bottom-right-radius:4px;margin-left:auto;
+    background:var(--orange);color:white;
+    align-self:flex-end;border-bottom-right-radius:4px;margin-left:auto;
 }
+.mia-msg-time { font-size:.63rem;opacity:.6;margin-top:.2rem;text-align:right; }
+.mia-msg-user .mia-msg-time { color:rgba(255,255,255,.8); }
+
 .typing-dot {
     width:7px;height:7px;background:var(--orange);border-radius:50%;
     animation:typingBounce .8s infinite;display:inline-block;
@@ -82,55 +123,95 @@
 @@keyframes typingBounce {
     0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)}
 }
+
+/* Scrollbar styling inside Mia */
+#mia-messages::-webkit-scrollbar { width:4px; }
+#mia-messages::-webkit-scrollbar-thumb { background:var(--light-2); border-radius:4px; }
 </style>
 
 <script>
 (function() {
-    const toggle = document.getElementById('mia-toggle');
-    const panel  = document.getElementById('mia-panel');
+    const toggle   = document.getElementById('mia-toggle');
+    const panel    = document.getElementById('mia-panel');
+    const messages = document.getElementById('mia-messages');
+    const input    = document.getElementById('mia-input');
+    const clearBtn = document.getElementById('mia-clear');
+    const prompts  = document.getElementById('mia-quick-prompts');
 
     toggle?.addEventListener('click', () => {
-        panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
-        if (panel.style.display === 'flex')
-            document.getElementById('mia-input')?.focus();
+        const isOpen = panel.style.display !== 'none';
+        panel.style.display = isOpen ? 'none' : 'flex';
+        if (!isOpen) { panel.style.display = 'flex'; input?.focus(); }
     });
 
+    // Quick prompt buttons
+    document.querySelectorAll('.mia-quick-prompt').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (input) { input.value = btn.dataset.prompt; }
+            sendMiaMessage();
+            if (prompts) prompts.style.display = 'none';
+        });
+    });
+
+    // Clear chat
+    clearBtn?.addEventListener('click', () => {
+        if (messages) messages.innerHTML = `<div class="mia-msg mia-msg-bot">
+            Chat cleared! What can I help you cook today?
+            <div class="mia-msg-time">Now</div></div>`;
+        if (prompts) prompts.style.display = 'flex';
+    });
+
+    // Auto-grow textarea
+    input?.addEventListener('input', () => {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 90) + 'px';
+    });
+    input?.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMiaMessage(); }
+    });
+
+    // SignalR connection
     const connection = new signalR.HubConnectionBuilder()
         .withUrl('/hubs/mia').withAutomaticReconnect().build();
 
     connection.on('MiaTyping', isTyping => {
-        document.getElementById('mia-typing').style.display = isTyping ? 'block' : 'none';
+        const t = document.getElementById('mia-typing');
+        if (t) t.style.display = isTyping ? 'block' : 'none';
+        if (isTyping) scrollMia();
     });
-
     connection.on('MiaResponse', data => {
+        document.getElementById('mia-typing').style.display = 'none';
         appendMiaMessage(data.message, false);
         scrollMia();
     });
-
     connection.start().catch(console.error);
 
     window.sendMiaMessage = function() {
-        const input = document.getElementById('mia-input');
-        const msg   = input?.value?.trim();
-        if (!msg || !connection) return;
+        const msg = input?.value?.trim();
+        if (!msg) return;
         appendMiaMessage(msg, true);
         input.value = '';
+        input.style.height = 'auto';
         scrollMia();
+        if (prompts && prompts.style.display !== 'none') prompts.style.display = 'none';
         connection.invoke('SendMessage', msg).catch(console.error);
     };
 
     function appendMiaMessage(text, isUser) {
-        const msgs = document.getElementById('mia-messages');
-        if (!msgs || !text) return;
-        const div = document.createElement('div');
+        if (!messages || !text) return;
+        const now  = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        const div  = document.createElement('div');
         div.className = `mia-msg ${isUser ? 'mia-msg-user' : 'mia-msg-bot'}`;
-        div.textContent = text;
-        msgs.appendChild(div);
+        // Render simple markdown-like: **bold**, newlines
+        const safe = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                         .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+                         .replace(/\n/g,'<br>');
+        div.innerHTML = safe + `<div class="mia-msg-time">${now}</div>`;
+        messages.appendChild(div);
     }
 
     function scrollMia() {
-        const msgs = document.getElementById('mia-messages');
-        if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        if (messages) messages.scrollTop = messages.scrollHeight;
     }
 })();
 </script>

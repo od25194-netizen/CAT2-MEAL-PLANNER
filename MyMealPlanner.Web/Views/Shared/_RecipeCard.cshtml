@@ -1,13 +1,41 @@
 @* ═══════════════════════════════════════════════════════════════
-   _RecipeCard.cshtml — Reusable recipe card partial
+   _RecipeCard.cshtml — Reusable recipe card partial (Enhanced)
+   • Hover quick-save button
+   • Star rating display
+   • "NEW" badge for recipes added within 24h
    ═══════════════════════════════════════════════════════════════ *@
 @model MyMealPlanner.Core.Models.Recipe
 @if (Model == null) { return; }
+
+@{
+    var isNew       = (DateTime.UtcNow - Model.CreatedAt).TotalHours < 24;
+    var totalTime   = Model.PrepTimeMinutes + Model.CookTimeMinutes;
+    var ratingStars = (int)Math.Round(Model.RatingAverage);
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+}
+
 <div class="recipe-card h-100">
+
+    @* ── Quick-save button (visible on hover) ── *@
+    @if (isAuthenticated)
+    {
+        <button class="recipe-card-save" data-save-recipe="@Model.Id"
+                title="Save to cookbook" aria-label="Save @Model.Title to cookbook">
+            <i class="bi bi-bookmark"></i>
+        </button>
+    }
+
+    @* ── NEW badge ── *@
+    @if (isNew)
+    {
+        <div class="recipe-card-new">New</div>
+    }
+
     <a asp-controller="Recipe" asp-action="Details"
        asp-route-id="@Model.Id" asp-route-slug="@Model.Slug"
        class="text-decoration-none d-flex flex-column h-100">
 
+        @* ── Cover image ── *@
         @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
         {
             <img src="@Model.CoverImageUrl" alt="@Model.Title"
@@ -21,31 +49,66 @@
         <div class="recipe-card-body">
             <div class="recipe-card-title">@Model.Title</div>
 
+            @* ── Cultural story snippet ── *@
             @if (!string.IsNullOrEmpty(Model.CulturalStory))
             {
-                <p class="small text-muted mb-2" style="-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">
+                <p class="small text-muted mb-2"
+                   style="-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">
                     @Model.CulturalStory
                 </p>
             }
 
+            @* ── Star rating ── *@
+            @if (Model.RatingAverage > 0)
+            {
+                <div class="star-rating mb-1" aria-label="@Model.RatingAverage.ToString("0.0") out of 5 stars">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <span class="star @(i <= ratingStars ? "" : "empty")">
+                            @(i <= ratingStars ? "★" : "☆")
+                        </span>
+                    }
+                    <span class="ms-1 text-muted" style="font-size:.72rem">
+                        @Model.RatingAverage.ToString("0.0")
+                    </span>
+                </div>
+            }
+
             <div class="recipe-card-meta">
+                @* ── Origin country ── *@
                 @if (!string.IsNullOrEmpty(Model.OriginCountry))
                 {
                     <span class="tag tag-country">🌍 @Model.OriginCountry</span>
                 }
+
+                @* ── Cook time ── *@
                 <span class="tag tag-orange">
                     <i class="bi bi-clock"></i>
-                    @(Model.PrepTimeMinutes + Model.CookTimeMinutes)m
+                    @(totalTime < 60 ? $"{totalTime}m" : $"{totalTime / 60}h {totalTime % 60}m".TrimEnd(' ', '0', 'm'))
                 </span>
+
+                @* ── Difficulty ── *@
                 @if (Model.DifficultyLevel <= MyMealPlanner.Core.Enums.DifficultyLevel.Easy)
                 {
                     <span class="tag tag-green">@Model.DifficultyLevel</span>
                 }
-                <div class="ms-auto d-flex align-items-center gap-2 text-muted" style="font-size:.78rem">
-                    <span><i class="bi bi-heart"></i> @Model.LikeCount.ToString("N0")</span>
+
+                @* ── Engagement stats ── *@
+                <div class="ms-auto d-flex align-items-center gap-2 text-muted" style="font-size:.76rem">
+                    <span title="@Model.LikeCount.ToString("N0") likes">
+                        <i class="bi bi-heart"></i> @Model.LikeCount.ToString("N0")
+                    </span>
+                    @if (Model.ViewCount > 0)
+                    {
+                        <span title="@Model.ViewCount.ToString("N0") views" class="d-none d-sm-inline">
+                            <i class="bi bi-eye"></i> @(Model.ViewCount >= 1000 ? $"{Model.ViewCount / 1000.0:0.#}k" : Model.ViewCount.ToString())
+                        </span>
+                    }
                     @if (!string.IsNullOrEmpty(Model.YouTubeVideoId))
                     {
-                        <span><i class="bi bi-play-circle text-danger"></i></span>
+                        <span title="Video available">
+                            <i class="bi bi-play-circle text-danger"></i>
+                        </span>
                     }
                 </div>
             </div>

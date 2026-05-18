@@ -1,116 +1,413 @@
 @{
     ViewData["Title"] = "Sign In";
+    ViewData["MetaDescription"] = "Sign in to My Meal Planner and continue your culinary journey.";
     var providers = ViewBag.ExternalProviders as List<Microsoft.AspNetCore.Authentication.AuthenticationScheme> ?? new();
 }
 
-<div class="auth-wrapper d-flex align-items-center justify-content-center min-vh-100 py-5">
-    <div class="auth-card glass-morphism p-4 p-md-5 animate-slide-up" style="max-width: 480px; width: 100%;">
-        <div class="text-center mb-5">
-            <div class="auth-logo mb-3">🍽️</div>
-            <h1 class="display-font h2 fw-bold text-dark">Welcome Back</h1>
-            <p class="text-muted">Manage your culinary journey in one place</p>
-        </div>
+@* ── Suppress the main layout's nav padding on auth pages ── *@
+@section Styles {
+<style>
+/* ── Auth page layout ─────────────────────────────────────── */
+.navbar-main, .site-footer { display: none !important; }
+body { background: #0d0d12; }
 
-        <!-- Social Logins -->
-        @if (providers.Any())
-        {
-            <div class="d-grid gap-3 mb-4">
+.auth-scene {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+    overflow: hidden;
+}
+@@media (max-width: 768px) {
+    .auth-scene { grid-template-columns: 1fr; }
+    .auth-visual { display: none; }
+}
+
+/* ── Left visual panel ──────────────────────────────────── */
+.auth-visual {
+    background: linear-gradient(145deg, #1a0a00 0%, #2d1200 40%, #E8630A 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+    position: relative;
+    overflow: hidden;
+}
+.auth-visual::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.visual-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+}
+.orb-1 { width: 300px; height: 300px; background: rgba(232,99,10,.35); top: -80px; right: -80px; }
+.orb-2 { width: 200px; height: 200px; background: rgba(255,150,50,.2); bottom: 60px; left: 30px; animation: floatOrb 7s ease-in-out infinite; }
+
+.visual-content { position: relative; z-index: 1; text-align: center; color: white; }
+.visual-emoji { font-size: 5rem; margin-bottom: 1.5rem; filter: drop-shadow(0 10px 30px rgba(0,0,0,.4)); animation: float 4s ease-in-out infinite; }
+@@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+
+.visual-title { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 1rem; font-family: var(--font-display,'serif'); }
+.visual-features { list-style: none; padding: 0; margin: 0; text-align: left; display: inline-block; }
+.visual-features li { display: flex; align-items: center; gap: .6rem; margin-bottom: .7rem; font-size: .9rem; color: rgba(255,255,255,.85); }
+.visual-features li::before { content: '✓'; background: rgba(255,255,255,.15); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; flex-shrink: 0; }
+
+.visual-testimonial {
+    margin-top: 2.5rem;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 16px;
+    padding: 1rem 1.25rem;
+    font-size: .85rem;
+    color: rgba(255,255,255,.9);
+    text-align: left;
+}
+
+/* ── Right form panel ───────────────────────────────────── */
+.auth-form-panel {
+    background: #0d0d12;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2.5rem;
+    position: relative;
+    overflow-y: auto;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    animation: cardIn .55s cubic-bezier(.16,1,.3,1) both;
+}
+@@keyframes cardIn { from { opacity:0; transform:translateY(24px) scale(.98); } to { opacity:1; transform:none; } }
+
+/* ── Brand mark ──────────────────────────────────────────── */
+.auth-brand {
+    display: flex; align-items: center; gap: .6rem;
+    margin-bottom: 2rem;
+}
+.auth-brand-icon { font-size: 1.8rem; }
+.auth-brand-name { font-size: 1.1rem; font-weight: 700; color: white; }
+
+/* ── Form heading ────────────────────────────────────────── */
+.auth-heading { color: white; font-size: 1.75rem; font-weight: 800; margin-bottom: .3rem; }
+.auth-sub { color: rgba(255,255,255,.45); font-size: .88rem; margin-bottom: 1.75rem; }
+
+/* ── Social button ───────────────────────────────────────── */
+.btn-social-dark {
+    display: flex; align-items: center; justify-content: center; gap: .6rem;
+    width: 100%; height: 48px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    color: white;
+    font-weight: 600; font-size: .9rem;
+    transition: all .2s ease;
+    cursor: pointer;
+}
+.btn-social-dark:hover {
+    background: rgba(255,255,255,.12);
+    border-color: rgba(255,255,255,.2);
+    transform: translateY(-1px);
+}
+
+/* ── Divider ─────────────────────────────────────────────── */
+.auth-divider {
+    display: flex; align-items: center; gap: 1rem;
+    margin: 1.25rem 0; color: rgba(255,255,255,.25); font-size: .78rem;
+}
+.auth-divider::before, .auth-divider::after {
+    content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.1);
+}
+
+/* ── Floating label dark style ───────────────────────────── */
+.auth-field { position: relative; margin-bottom: 1rem; }
+.auth-field label {
+    position: absolute; top: 50%; left: 1rem; transform: translateY(-50%);
+    color: rgba(255,255,255,.4); font-size: .88rem; pointer-events: none;
+    transition: all .2s ease; background: transparent; padding: 0 .2rem;
+}
+.auth-field input {
+    width: 100%; background: rgba(255,255,255,.06);
+    border: 1.5px solid rgba(255,255,255,.1);
+    border-radius: 12px; color: white; font-size: .92rem;
+    padding: 1rem 1rem .5rem;
+    outline: none; transition: border-color .2s, box-shadow .2s;
+    -webkit-autofill { background: rgba(255,255,255,.06); }
+}
+.auth-field input:focus { border-color: #E8630A; box-shadow: 0 0 0 3px rgba(232,99,10,.2); }
+.auth-field input:focus + label,
+.auth-field input:not(:placeholder-shown) + label {
+    top: .45rem; transform: none; font-size: .7rem; color: #E8630A;
+}
+.auth-field input::placeholder { color: transparent; }
+.auth-field input:-webkit-autofill,
+.auth-field input:-webkit-autofill:hover,
+.auth-field input:-webkit-autofill:focus {
+    -webkit-text-fill-color: white;
+    -webkit-box-shadow: 0 0 0 1000px #181820 inset;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ── Password toggle ─────────────────────────────────────── */
+.pwd-toggle {
+    position: absolute; right: .9rem; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: rgba(255,255,255,.35);
+    cursor: pointer; padding: .2rem; line-height: 1; transition: color .2s;
+    z-index: 2;
+}
+.pwd-toggle:hover { color: rgba(255,255,255,.7); }
+
+/* ── Password strength ───────────────────────────────────── */
+.strength-bar { height: 3px; border-radius: 4px; background: rgba(255,255,255,.08); margin-top: .4rem; overflow: hidden; }
+.strength-fill { height: 100%; border-radius: 4px; transition: width .3s ease, background .3s ease; width: 0; }
+.strength-label { font-size: .7rem; color: rgba(255,255,255,.4); margin-top: .25rem; }
+
+/* ── Submit button ───────────────────────────────────────── */
+.btn-auth {
+    width: 100%; height: 50px;
+    background: linear-gradient(135deg, #E8630A, #c94e00);
+    border: none; border-radius: 12px;
+    color: white; font-weight: 700; font-size: .95rem;
+    letter-spacing: .02em;
+    cursor: pointer; position: relative; overflow: hidden;
+    transition: all .25s ease; margin-top: .5rem;
+}
+.btn-auth:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(232,99,10,.4); }
+.btn-auth:active { transform: translateY(0); }
+.btn-auth .spinner {
+    width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3);
+    border-top-color: white; border-radius: 50%;
+    animation: spin .7s linear infinite; display: none;
+}
+@@keyframes spin { to { transform: rotate(360deg); } }
+.btn-auth.loading .btn-text { display: none; }
+.btn-auth.loading .spinner { display: inline-block; }
+
+/* ── Error alert ─────────────────────────────────────────── */
+.auth-error {
+    background: rgba(220,53,69,.12); border: 1px solid rgba(220,53,69,.3);
+    border-radius: 10px; padding: .75rem 1rem; margin-bottom: 1rem;
+    color: #ff8c98; font-size: .85rem;
+    display: flex; align-items: flex-start; gap: .5rem;
+}
+
+/* ── Remember / Forgot row ───────────────────────────────── */
+.auth-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.auth-check-label { display: flex; align-items: center; gap: .5rem; color: rgba(255,255,255,.5); font-size: .82rem; cursor: pointer; }
+.auth-check-label input[type=checkbox] { width: 16px; height: 16px; accent-color: #E8630A; cursor: pointer; }
+.auth-forgot { color: rgba(232,99,10,.9); font-size: .82rem; text-decoration: none; font-weight: 600; }
+.auth-forgot:hover { color: #E8630A; text-decoration: underline; }
+
+/* ── Bottom link ─────────────────────────────────────────── */
+.auth-footer-link { text-align: center; margin-top: 1.5rem; color: rgba(255,255,255,.35); font-size: .85rem; }
+.auth-footer-link a { color: #E8630A; font-weight: 700; text-decoration: none; }
+.auth-footer-link a:hover { text-decoration: underline; }
+
+/* ── Security badge ──────────────────────────────────────── */
+.auth-security {
+    display: flex; align-items: center; justify-content: center; gap: .4rem;
+    margin-top: 1.5rem; color: rgba(255,255,255,.2); font-size: .72rem;
+}
+
+/* ── Locked out banner ───────────────────────────────────── */
+.lockout-banner {
+    background: rgba(255,180,0,.1); border: 1px solid rgba(255,180,0,.3);
+    border-radius: 10px; padding: .75rem 1rem; margin-bottom: 1rem;
+    color: #ffd966; font-size: .85rem;
+}
+</style>
+}
+
+<div class="auth-scene">
+
+    @* ── LEFT: Visual Panel ── *@
+    <div class="auth-visual">
+        <div class="visual-orb orb-1"></div>
+        <div class="visual-orb orb-2"></div>
+        <div class="visual-content">
+            <div class="visual-emoji">🍽️</div>
+            <h2 class="visual-title">Cook smarter.<br>Live better.</h2>
+            <ul class="visual-features">
+                <li>AI-powered recipes from 195 countries</li>
+                <li>Personalised nutrition tracking</li>
+                <li>Smart weekly meal planning</li>
+                <li>Level up your chef skills</li>
+                <li>Connect with food lovers worldwide</li>
+            </ul>
+            <div class="visual-testimonial">
+                <div style="color:#E8630A;font-weight:700;font-size:.8rem;margin-bottom:.3rem">★★★★★</div>
+                "My Meal Planner completely changed how I eat. I lost 12kg and discovered food I never knew existed!"
+                <div style="margin-top:.5rem;color:rgba(255,255,255,.5);font-size:.78rem">— Amara K., Lagos</div>
+            </div>
+        </div>
+    </div>
+
+    @* ── RIGHT: Form Panel ── *@
+    <div class="auth-form-panel">
+        <div class="auth-card">
+
+            @* Brand *@
+            <div class="auth-brand">
+                <span class="auth-brand-icon">🍳</span>
+                <span class="auth-brand-name">My Meal Planner</span>
+            </div>
+
+            <h1 class="auth-heading">Welcome back</h1>
+            <p class="auth-sub">Sign in to continue your culinary journey</p>
+
+            @* ── TempData alerts ── *@
+            @if (TempData["Error"] is string err)
+            {
+                <div class="auth-error" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:.1rem"></i>
+                    <span>@err</span>
+                </div>
+            }
+            @if (TempData["Success"] is string ok)
+            {
+                <div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem;color:#6ee7b7;font-size:.85rem">
+                    <i class="bi bi-check-circle-fill me-2"></i>@ok
+                </div>
+            }
+
+            @* ── Lockout banner ── *@
+            @if (TempData["Lockout"] is string lockMsg)
+            {
+                <div class="lockout-banner" role="alert">
+                    <i class="bi bi-lock-fill me-2"></i>@lockMsg
+                </div>
+            }
+
+            @* ── Google / OAuth ── *@
+            @if (providers.Any())
+            {
                 @foreach (var p in providers)
                 {
-                    <form asp-action="ExternalLogin" method="post" class="w-100">
+                    <form asp-action="ExternalLogin" method="post" class="mb-2">
                         @Html.AntiForgeryToken()
-                        <input type="hidden" name="provider" value="@p.Name" />
+                        <input type="hidden" name="provider"  value="@p.Name" />
                         <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
-                        <button type="submit" class="btn btn-social btn-@p.Name.ToLower() w-100">
-                            @if (p.Name == "Google") {
-                                <svg width="18" height="18" class="me-2" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                            } else {
-                                <i class="bi bi-@p.Name.ToLower() me-2"></i>
+                        <button type="submit" class="btn-social-dark">
+                            @if (p.Name == "Google")
+                            {
+                                <svg width="18" height="18" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                </svg>
+                                <span>Continue with Google</span>
                             }
-                            Sign in with @p.Name
+                            else
+                            {
+                                <i class="bi bi-@p.Name.ToLower()"></i>
+                                <span>Continue with @p.Name</span>
+                            }
                         </button>
                     </form>
                 }
-            </div>
-            <div class="separator mb-4">
-                <span>or use your email</span>
-            </div>
-        }
+                <div class="auth-divider">or sign in with email</div>
+            }
 
-        <form asp-action="Login" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" asp-for="ReturnUrl" />
-            
-            <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+            @* ── Email form ── *@
+            <form asp-action="Login" method="post" id="login-form" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="ReturnUrl" />
 
-            <div class="form-floating mb-3">
-                <input asp-for="Email" class="form-control" placeholder="Email" autocomplete="email" />
-                <label asp-for="Email">Email Address</label>
-            </div>
+                @* Validation summary *@
+                @{
+                    var errors = ViewData.ModelState.Values.SelectMany(v => v.Errors).ToList();
+                }
+                @if (errors.Any())
+                {
+                    <div class="auth-error" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:.1rem"></i>
+                        <div>@errors.First().ErrorMessage</div>
+                    </div>
+                }
 
-            <div class="form-floating mb-3 position-relative">
-                <input asp-for="Password" class="form-control" type="password" id="login-pwd" placeholder="Password" autocomplete="current-password" />
-                <label asp-for="Password">Password</label>
-                <button type="button" class="btn btn-link password-toggle-btn" onclick="togglePassword('login-pwd')">
-                    <i class="bi bi-eye"></i>
-                </button>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div class="form-check">
-                    <input asp-for="RememberMe" class="form-check-input custom-checkbox" type="checkbox" />
-                    <label asp-for="RememberMe" class="form-check-label text-muted small">Keep me signed in</label>
+                @* Email *@
+                <div class="auth-field">
+                    <input asp-for="Email" type="email" id="login-email"
+                           placeholder="Email address"
+                           autocomplete="email" inputmode="email"
+                           spellcheck="false" autocapitalize="none" />
+                    <label for="login-email">Email address</label>
                 </div>
-                <a asp-controller="Account" asp-action="ForgotPassword" class="text-orange small text-decoration-none fw-semibold">Forgot Password?</a>
+
+                @* Password *@
+                <div class="auth-field" style="margin-bottom:.5rem">
+                    <input asp-for="Password" type="password" id="login-pwd"
+                           placeholder="Password"
+                           autocomplete="current-password" />
+                    <label for="login-pwd">Password</label>
+                    <button type="button" class="pwd-toggle" onclick="togglePwd('login-pwd',this)"
+                            tabindex="-1" aria-label="Toggle password visibility">
+                        <i class="bi bi-eye" style="font-size:1rem"></i>
+                    </button>
+                </div>
+
+                @* Remember / Forgot *@
+                <div class="auth-meta">
+                    <label class="auth-check-label">
+                        <input asp-for="RememberMe" type="checkbox" />
+                        Keep me signed in
+                    </label>
+                    <a asp-action="ForgotPassword" class="auth-forgot">Forgot password?</a>
+                </div>
+
+                @* Submit *@
+                <button type="submit" class="btn-auth" id="login-submit">
+                    <span class="btn-text">Sign In <i class="bi bi-arrow-right ms-1"></i></span>
+                    <span class="spinner" style="margin:auto"></span>
+                </button>
+            </form>
+
+            @* Sign up link *@
+            <div class="auth-footer-link">
+                Don't have an account? <a asp-action="Register">Create free account</a>
             </div>
 
-            <button type="submit" class="btn btn-orange w-100 py-3 rounded-pill fw-bold shadow-sm hover-up">
-                Sign In <i class="bi bi-arrow-right ms-1"></i>
-            </button>
-        </form>
-
-        <p class="text-center mt-4 mb-0 text-muted small">
-            Don't have an account? 
-            <a asp-controller="Account" asp-action="Register" class="text-orange fw-bold text-decoration-none">Create a free account</a>
-        </p>
+            @* Security badge *@
+            <div class="auth-security">
+                <i class="bi bi-shield-lock-fill" style="color:#E8630A;opacity:.5"></i>
+                256-bit SSL encryption · We never store plain-text passwords
+            </div>
+        </div>
     </div>
 </div>
 
-<style>
-    .auth-wrapper { background: linear-gradient(135deg, #FFF5F0 0%, #FFE4D6 100%); position: relative; overflow: hidden; }
-    .auth-wrapper::before { content: ""; position: absolute; width: 400px; height: 400px; background: #E8630A; filter: blur(150px); opacity: 0.1; top: -100px; left: -100px; border-radius: 50%; }
-    .auth-wrapper::after { content: ""; position: absolute; width: 400px; height: 400px; background: #E8630A; filter: blur(150px); opacity: 0.1; bottom: -100px; right: -100px; border-radius: 50%; }
-
-    .auth-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 25px 50px -12px rgba(232, 99, 10, 0.15); }
-    .auth-logo { font-size: 3.5rem; }
-
-    .btn-social { height: 50px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
-    .btn-google { background: white; border: 1px solid #E5E7EB; color: #374151; }
-    .btn-google:hover { background: #F9FAFB; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .btn-facebook { background: #1877F2; color: white; border: none; }
-    .btn-facebook:hover { background: #166FE5; box-shadow: 0 4px 12px rgba(24,119,242,0.3); }
-
-    .separator { text-align: center; position: relative; z-index: 1; }
-    .separator::before { content: ""; position: absolute; left: 0; top: 50%; width: 100%; height: 1px; background: #E5E7EB; z-index: -1; }
-    .separator span { background: #FFF9F7; padding: 0 15px; color: #9CA3AF; font-size: 0.8rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-
-    .form-control { border-radius: 12px; border: 1.5px solid #F3F4F6; padding: 1.2rem 1rem; }
-    .form-control:focus { border-color: #E8630A; box-shadow: 0 0 0 4px rgba(232, 99, 10, 0.1); }
-    
-    .password-toggle-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #9CA3AF; text-decoration: none; }
-    .custom-checkbox { width: 1.2rem; height: 1.2rem; border-radius: 4px; border: 1.5px solid #D1D5DB; }
-    .custom-checkbox:checked { background-color: #E8630A; border-color: #E8630A; }
-
-    .animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-    @@keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-</style>
-
 <script>
-    function togglePassword(id) {
-        const input = document.getElementById(id);
-        const icon = event.currentTarget.querySelector('i');
-        input.type = input.type === 'password' ? 'text' : 'password';
-        icon.classList.toggle('bi-eye');
-        icon.classList.toggle('bi-eye-slash');
-    }
+function togglePwd(id, btn) {
+    const inp = document.getElementById(id);
+    const ico = btn.querySelector('i');
+    const isHidden = inp.type === 'password';
+    inp.type = isHidden ? 'text' : 'password';
+    ico.className = isHidden ? 'bi bi-eye-slash' : 'bi bi-eye';
+    ico.style.fontSize = '1rem';
+}
+
+// Show spinner on submit
+document.getElementById('login-form')?.addEventListener('submit', function(e) {
+    // Client-side: ensure email + password not empty
+    const email = document.getElementById('login-email').value.trim();
+    const pwd   = document.getElementById('login-pwd').value;
+    if (!email || !pwd) return; // let HTML5 validation handle it
+    document.getElementById('login-submit').classList.add('loading');
+});
+
+// Auto-focus email if empty
+window.addEventListener('DOMContentLoaded', () => {
+    const emailEl = document.getElementById('login-email');
+    if (emailEl && !emailEl.value) emailEl.focus();
+});
 </script>

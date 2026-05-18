@@ -846,3 +846,217 @@ img { max-width: 100%; border-radius: var(--radius-sm); }
   .hero-search-bar { max-width: 100%; padding: .5rem; }
   .dropdown-menu-rich { min-width: 200px; }
 }
+
+/* ── Reading Progress Bar ─────────────────────────────────────── */
+#reading-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--orange-mid), var(--orange));
+  z-index: 9999;
+  transition: width .1s linear;
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 6px rgba(232,99,10,.5);
+}
+
+/* ── Scroll-To-Top Button ─────────────────────────────────────── */
+#scroll-top-btn {
+  position: fixed;
+  bottom: 5.5rem;
+  right: 1.5rem;
+  width: 44px; height: 44px;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transform: translateY(20px) scale(.9);
+  transition: opacity .3s ease, transform .3s ease;
+  z-index: 8000;
+}
+#scroll-top-btn.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+#scroll-top-btn:hover {
+  background: var(--orange-dark);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── Cookie Consent Banner ────────────────────────────────────── */
+#cookie-banner {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--dark-2);
+  color: #D0D0E0;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  z-index: 9998;
+  border-top: 2px solid var(--orange);
+  transform: translateY(100%);
+  transition: transform .4s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 -4px 20px rgba(0,0,0,.3);
+}
+#cookie-banner.visible { transform: translateY(0); }
+#cookie-banner p { margin: 0; font-size: .88rem; flex: 1; min-width: 200px; }
+#cookie-banner .cookie-actions { display: flex; gap: .75rem; flex-shrink: 0; }
+#cookie-banner a { color: var(--orange-mid); }
+
+/* ── Skeleton Loader ──────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -800px 0; }
+  100% { background-position:  800px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg,
+    var(--light-2) 25%,
+    var(--light)   50%,
+    var(--light-2) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+.skeleton-card {
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+.skeleton-img  { width: 100%; aspect-ratio: 4/3; }
+.skeleton-line { height: 14px; margin: .5rem 1rem; }
+.skeleton-line.short { width: 60%; }
+
+/* ── Star Rating ──────────────────────────────────────────────── */
+.star-rating { display: inline-flex; gap: 1px; }
+.star-rating .star { color: var(--gold); font-size: .8rem; }
+.star-rating .star.empty { color: var(--light-2); }
+
+/* ── Recipe Card Quick-Save (hover overlay) ───────────────────── */
+.recipe-card { position: relative; }
+.recipe-card-save {
+  position: absolute;
+  top: .6rem; right: .6rem;
+  width: 34px; height: 34px;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(4px);
+  border: none;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(.8);
+  transition: opacity .2s ease, transform .2s ease, background .2s;
+  z-index: 2;
+  color: var(--mid);
+}
+.recipe-card:hover .recipe-card-save {
+  opacity: 1;
+  transform: scale(1);
+}
+.recipe-card-save:hover { background: var(--orange); color: white; }
+.recipe-card-save.saved { opacity: 1; transform: scale(1); color: var(--orange); }
+
+/* ── Mia Chat Improvements ────────────────────────────────────── */
+@keyframes miaPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232,99,10,.6); }
+  50%       { box-shadow: 0 0 0 10px rgba(232,99,10,0); }
+}
+#mia-toggle.pulse { animation: miaPulse 2s ease 2; }
+
+.mia-quick-prompt {
+  background: var(--orange-light);
+  color: var(--orange-dark);
+  border: 1px solid rgba(232,99,10,.2);
+  border-radius: 50px;
+  padding: .25rem .75rem;
+  font-size: .78rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.mia-quick-prompt:hover { background: var(--orange); color: white; }
+
+.mia-msg-time {
+  font-size: .65rem;
+  color: var(--mid);
+  margin-top: .15rem;
+  text-align: right;
+}
+
+/* ── "New" badge on recipe card ───────────────────────────────── */
+.recipe-card-new {
+  position: absolute;
+  top: .6rem; left: .6rem;
+  background: var(--orange);
+  color: white;
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: .2rem .5rem;
+  border-radius: 50px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ── Enhanced Hero animated orbs ─────────────────────────────── */
+@keyframes floatOrb {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-20px) scale(1.05); }
+}
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: floatOrb 6s ease-in-out infinite;
+}
+
+/* ── Notification count badge ─────────────────────────────────── */
+.notif-count-badge {
+  position: absolute;
+  top: 2px; right: 2px;
+  min-width: 18px; height: 18px;
+  background: var(--red);
+  color: white;
+  border-radius: 50px;
+  font-size: .65rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--white);
+}
+
+/* ── Print styles ─────────────────────────────────────────────── */
+@media print {
+  .navbar-main, #mia-widget, #scroll-top-btn,
+  #cookie-banner, .site-footer, .btn { display: none !important; }
+  body { background: white; color: black; }
+  .hero { background: white !important; color: black !important; }
+}
+
+/* ── Focus visible (accessibility) ───────────────────────────── */
+:focus-visible {
+  outline: 3px solid var(--orange);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Page transition ──────────────────────────────────────────── */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.main-content {
+  animation: pageIn .35s ease both;
+}

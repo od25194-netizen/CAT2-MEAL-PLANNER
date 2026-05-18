@@ -5,200 +5,355 @@
         ("NG","🇳🇬 Nigeria"),("GH","🇬🇭 Ghana"),("KE","🇰🇪 Kenya"),("ZA","🇿🇦 South Africa"),
         ("ET","🇪🇹 Ethiopia"),("EG","🇪🇬 Egypt"),("MA","🇲🇦 Morocco"),("US","🇺🇸 United States"),
         ("GB","🇬🇧 United Kingdom"),("CA","🇨🇦 Canada"),("AU","🇦🇺 Australia"),
+        ("IN","🇮🇳 India"),("BR","🇧🇷 Brazil"),("FR","🇫🇷 France"),("DE","🇩🇪 Germany"),
     };
 }
 
-<div class="auth-wrapper d-flex align-items-center justify-content-center min-vh-100 py-5">
-    <div class="auth-card glass-morphism p-4 p-md-5 animate-slide-up" style="max-width: 620px; width: 100%;">
-        <div class="text-center mb-4">
-            <div class="auth-logo mb-2">🍽️</div>
-            <h1 class="display-font h3 fw-bold text-dark">Join My Meal Planner</h1>
-            <p class="text-muted small">Step @step of 3 — @(step == 1 ? "Your Profile" : step == 2 ? "Food Identity" : "Safety & Finalize")</p>
-        </div>
+@section Styles {
+<style>
+.navbar-main, .site-footer { display:none!important; }
+body { background:#0d0d12; }
+.auth-scene { min-height:100vh; display:grid; grid-template-columns:1fr 1fr; }
+@@media(max-width:768px){ .auth-scene{grid-template-columns:1fr} .auth-visual{display:none} }
+.auth-visual {
+    background:linear-gradient(145deg,#1a0a00 0%,#2d1200 40%,#E8630A 100%);
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    padding:3rem;position:relative;overflow:hidden;
+}
+.visual-orb{position:absolute;border-radius:50%;filter:blur(60px);pointer-events:none;}
+.orb-1{width:300px;height:300px;background:rgba(232,99,10,.35);top:-80px;right:-80px;}
+.orb-2{width:200px;height:200px;background:rgba(255,150,50,.2);bottom:60px;left:30px;animation:floatOrb 7s ease-in-out infinite;}
+.visual-content{position:relative;z-index:1;text-align:center;color:white;}
+.visual-emoji{font-size:4rem;margin-bottom:1rem;animation:floatEmoji 4s ease-in-out infinite;}
+@@keyframes floatEmoji{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.visual-steps{list-style:none;padding:0;margin:1.5rem 0 0;text-align:left;display:inline-block;}
+.visual-steps li{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem;font-size:.88rem;color:rgba(255,255,255,.8);}
+.step-num{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;}
+.step-num.done{background:#E8630A;border-color:#E8630A;}
+.step-num.active{background:rgba(232,99,10,.3);border-color:#E8630A;color:#E8630A;}
 
-        <!-- Progress Bar -->
-        <div class="progress mb-4" style="height: 6px; border-radius: 10px;">
-            <div class="progress-bar bg-orange" role="progressbar" style="width: @(step * 33.33)%; transition: width 0.5s ease-in-out;"></div>
-        </div>
+.auth-form-panel{background:#0d0d12;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:2rem;overflow-y:auto;}
+.auth-card{width:100%;max-width:480px;animation:cardIn .5s cubic-bezier(.16,1,.3,1) both;}
+@@keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 
-        @if (step == 1)
-        {
-            <!-- Social First -->
-            <div class="d-grid gap-2 mb-4">
+.auth-brand{display:flex;align-items:center;gap:.6rem;margin-bottom:1.5rem;}
+.auth-brand-name{font-size:1.1rem;font-weight:700;color:white;}
+
+.auth-heading{color:white;font-size:1.6rem;font-weight:800;margin-bottom:.25rem;}
+.auth-sub{color:rgba(255,255,255,.4);font-size:.85rem;margin-bottom:1.25rem;}
+
+/* Step progress */
+.step-pills{display:flex;gap:.4rem;margin-bottom:1.5rem;}
+.step-pill{flex:1;height:4px;border-radius:4px;background:rgba(255,255,255,.1);transition:background .4s;}
+.step-pill.active,.step-pill.done{background:#E8630A;}
+
+/* Dark form fields */
+.auth-field{position:relative;margin-bottom:.9rem;}
+.auth-field label{position:absolute;top:50%;left:1rem;transform:translateY(-50%);color:rgba(255,255,255,.35);font-size:.86rem;pointer-events:none;transition:all .2s;padding:0 .15rem;}
+.auth-field input,.auth-field select{width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:11px;color:white;font-size:.9rem;padding:.95rem 1rem .4rem;outline:none;transition:border-color .2s,box-shadow .2s;}
+.auth-field select option{background:#1a1a24;color:white;}
+.auth-field input:focus,.auth-field select:focus{border-color:#E8630A;box-shadow:0 0 0 3px rgba(232,99,10,.18);}
+.auth-field input:focus+label,.auth-field input:not(:placeholder-shown)+label,.auth-field select:focus+label{top:.42rem;transform:none;font-size:.68rem;color:#E8630A;}
+.auth-field input::placeholder{color:transparent;}
+.auth-field input:-webkit-autofill,.auth-field input:-webkit-autofill:focus{-webkit-text-fill-color:white;-webkit-box-shadow:0 0 0 1000px #181820 inset;}
+
+.pwd-toggle{position:absolute;right:.85rem;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;z-index:2;transition:color .2s;}
+.pwd-toggle:hover{color:rgba(255,255,255,.7);}
+
+/* Strength bar */
+.strength-wrap{margin-top:.3rem;}
+.strength-bar{height:3px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;}
+.strength-fill{height:100%;width:0;border-radius:3px;transition:width .3s,background .3s;}
+.strength-hint{font-size:.68rem;margin-top:.2rem;color:rgba(255,255,255,.35);}
+
+/* Chip toggles */
+.chip-group{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.4rem;}
+.chip-input{display:none;}
+.chip-label{padding:.3rem .85rem;border:1.5px solid rgba(255,255,255,.12);border-radius:50px;color:rgba(255,255,255,.5);font-size:.8rem;cursor:pointer;transition:all .2s;}
+.chip-input:checked+.chip-label{background:#E8630A;border-color:#E8630A;color:white;}
+.chip-label:hover{border-color:rgba(232,99,10,.5);color:rgba(255,255,255,.8);}
+
+.chip-danger{border-color:rgba(220,53,69,.3);color:rgba(255,120,120,.7);}
+.chip-input:checked+.chip-danger{background:#dc3545;border-color:#dc3545;color:white;}
+
+/* Section label */
+.field-section{color:rgba(255,255,255,.5);font-size:.78rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.6rem;margin-top:.25rem;}
+
+/* Submit */
+.btn-auth{width:100%;height:50px;background:linear-gradient(135deg,#E8630A,#c94e00);border:none;border-radius:12px;color:white;font-weight:700;font-size:.95rem;cursor:pointer;transition:all .25s;margin-top:.5rem;display:flex;align-items:center;justify-content:center;gap:.5rem;}
+.btn-auth:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(232,99,10,.4);}
+
+/* Error */
+.auth-error{background:rgba(220,53,69,.1);border:1px solid rgba(220,53,69,.25);border-radius:10px;padding:.7rem 1rem;margin-bottom:1rem;color:#ff8c98;font-size:.84rem;display:flex;gap:.5rem;align-items:flex-start;}
+
+.auth-footer-link{text-align:center;margin-top:1.25rem;color:rgba(255,255,255,.3);font-size:.84rem;}
+.auth-footer-link a{color:#E8630A;font-weight:700;text-decoration:none;}
+
+/* Row layout */
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;}
+@@media(max-width:480px){.field-row{grid-template-columns:1fr;}}
+
+/* Social button */
+.btn-social-dark{display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;height:48px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:12px;color:white;font-weight:600;font-size:.88rem;transition:all .2s;cursor:pointer;margin-bottom:.75rem;}
+.btn-social-dark:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);}
+.auth-divider{display:flex;align-items:center;gap:1rem;margin:.75rem 0;color:rgba(255,255,255,.2);font-size:.76rem;}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.09);}
+</style>
+}
+
+<div class="auth-scene">
+    @* ── Visual Panel ── *@
+    <div class="auth-visual">
+        <div class="visual-orb orb-1"></div>
+        <div class="visual-orb orb-2"></div>
+        <div class="visual-content">
+            <div class="visual-emoji">@(step == 1 ? "👤" : step == 2 ? "🥗" : "🛡️")</div>
+            <h2 style="font-size:1.8rem;font-weight:800;color:white;margin-bottom:.5rem">
+                @(step == 1 ? "Start your journey" : step == 2 ? "Your food identity" : "Almost there!")
+            </h2>
+            <p style="color:rgba(255,255,255,.55);font-size:.88rem;margin-bottom:1.5rem">
+                @(step == 1 ? "Create your account to unlock a world of culinary discovery." : step == 2 ? "Help us personalise recipes just for you." : "Your safety and privacy matter to us.")
+            </p>
+            <ul class="visual-steps">
+                <li><span class="step-num @(step > 1 ? "done" : step == 1 ? "active" : "")">@(step > 1 ? "✓" : "1")</span> Your Profile</li>
+                <li><span class="step-num @(step > 2 ? "done" : step == 2 ? "active" : "")">@(step > 2 ? "✓" : "2")</span> Food Identity</li>
+                <li><span class="step-num @(step == 3 ? "active" : "")">3</span> Safety &amp; Finalize</li>
+            </ul>
+        </div>
+    </div>
+
+    @* ── Form Panel ── *@
+    <div class="auth-form-panel">
+        <div class="auth-card">
+            <div class="auth-brand">
+                <span style="font-size:1.6rem">🍳</span>
+                <span class="auth-brand-name">My Meal Planner</span>
+            </div>
+
+            <h1 class="auth-heading">@(step == 1 ? "Create your account" : step == 2 ? "Food preferences" : "Final step")</h1>
+            <p class="auth-sub">Step @step of 3 — @(step == 1 ? "Basic info" : step == 2 ? "Diet & goals" : "Safety & terms")</p>
+
+            @* Step pills *@
+            <div class="step-pills">
+                <div class="step-pill @(step >= 1 ? "active" : "")"></div>
+                <div class="step-pill @(step >= 2 ? "active" : "")"></div>
+                <div class="step-pill @(step >= 3 ? "active" : "")"></div>
+            </div>
+
+            @* Validation errors *@
+            @{var errs = ViewData.ModelState.Values.SelectMany(v => v.Errors).ToList();}
+            @if (errs.Any())
+            {
+                <div class="auth-error">
+                    <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:.1rem"></i>
+                    <div>@errs.First().ErrorMessage</div>
+                </div>
+            }
+
+            @* ════ STEP 1 ════ *@
+            @if (step == 1)
+            {
                 <form asp-action="ExternalLogin" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="provider" value="Google" />
-                    <button type="submit" class="btn btn-social btn-google w-100">
-                        <svg width="18" height="18" class="me-2" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    <button type="submit" class="btn-social-dark">
+                        <svg width="17" height="17" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                         Sign up with Google
                     </button>
                 </form>
-            </div>
-            <div class="separator mb-4"><span>or use email</span></div>
+                <div class="auth-divider">or use email</div>
 
-            <form asp-action="RegisterStep1" method="post">
-                @Html.AntiForgeryToken()
-                <div class="row g-3">
-                    <div class="col-12">
-                        <div class="form-floating mb-3">
-                            <input name="FullName" class="form-control" placeholder="Name" required />
-                            <label>Full Name</label>
-                        </div>
+                <form asp-action="RegisterStep1" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="auth-field">
+                        <input name="FullName" type="text" placeholder="Full name" autocomplete="name" required />
+                        <label>Full Name</label>
                     </div>
-                    <div class="col-12">
-                        <div class="form-floating mb-3">
-                            <input name="Email" type="email" class="form-control" placeholder="Email" required />
-                            <label>Email Address</label>
-                        </div>
+                    <div class="auth-field">
+                        <input name="Email" type="email" placeholder="Email address" autocomplete="email" inputmode="email" required />
+                        <label>Email Address</label>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-floating mb-3 position-relative">
-                            <input name="Password" type="password" class="form-control" id="reg-pwd" placeholder="Password" required oninput="checkStrength(this.value)" />
+                    <div class="field-row">
+                        <div class="auth-field">
+                            <input name="Password" type="password" id="reg-pwd" placeholder="Password" autocomplete="new-password" required oninput="calcStrength(this.value)" />
                             <label>Password</label>
-                            <div id="pwd-meter" class="mt-1" style="height:4px; border-radius:10px;"></div>
+                            <button type="button" class="pwd-toggle" onclick="togglePwd('reg-pwd',this)" tabindex="-1" aria-label="Show password">
+                                <i class="bi bi-eye" style="font-size:1rem"></i>
+                            </button>
+                            <div class="strength-wrap">
+                                <div class="strength-bar"><div class="strength-fill" id="s-fill"></div></div>
+                                <div class="strength-hint" id="s-hint">Min. 8 chars, uppercase, number, symbol</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-floating mb-3">
-                            <input name="ConfirmPassword" type="password" class="form-control" placeholder="Repeat" required />
+                        <div class="auth-field">
+                            <input name="ConfirmPassword" type="password" id="reg-pwd2" placeholder="Confirm" autocomplete="new-password" required />
                             <label>Confirm Password</label>
+                            <button type="button" class="pwd-toggle" onclick="togglePwd('reg-pwd2',this)" tabindex="-1" aria-label="Show password">
+                                <i class="bi bi-eye" style="font-size:1rem"></i>
+                            </button>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-floating mb-3">
-                            <input name="DateOfBirth" type="date" class="form-control" required />
+                    <div class="field-row">
+                        <div class="auth-field">
+                            <input name="DateOfBirth" type="date" placeholder="DOB" required style="padding:.95rem 1rem .4rem" />
                             <label>Date of Birth</label>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-floating mb-3">
-                            <select name="CountryCode" class="form-select" required>
-                                <option value="">Select...</option>
-                                @foreach (var (code, name) in countries) { <option value="@code">@name</option> }
+                        <div class="auth-field">
+                            <select name="CountryCode" required style="padding:.95rem 1rem .4rem;-webkit-appearance:none">
+                                <option value="" disabled selected></option>
+                                @foreach (var (code, name) in countries)
+                                { <option value="@code">@name</option> }
                             </select>
                             <label>Country</label>
                         </div>
                     </div>
-                </div>
-                <button type="submit" class="btn btn-orange w-100 py-3 rounded-pill fw-bold mt-4 hover-up">
-                    Next Step <i class="bi bi-arrow-right ms-1"></i>
-                </button>
-            </form>
-        }
+                    <button type="submit" class="btn-auth">Continue <i class="bi bi-arrow-right"></i></button>
+                </form>
+            }
 
-        @if (step == 2)
-        {
-            <form asp-action="RegisterStep2" method="post" class="animate-fade-in">
-                @Html.AntiForgeryToken()
-                <div class="form-floating mb-4">
-                    <input name="FavouriteDish" class="form-control" placeholder="Dish" />
-                    <label>What's your favourite dish?</label>
-                </div>
-
-                <div class="mb-4">
-                    <label class="fw-bold text-dark mb-3 d-block">Dietary Lifestyle</label>
-                    <div class="d-flex flex-wrap gap-2">
-                        @foreach (var diet in new[] { "Vegan","Vegetarian","Halal","Keto","Paleo","Gluten-Free" })
-                        {
-                            <input type="checkbox" class="btn-check" name="DietaryRestrictions" value="@diet" id="diet-@diet">
-                            <label class="btn btn-outline-orange rounded-pill btn-sm px-3" for="diet-@diet">@diet</label>
-                        }
+            @* ════ STEP 2 ════ *@
+            @if (step == 2)
+            {
+                <form asp-action="RegisterStep2" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="auth-field">
+                        <input name="FavouriteDish" type="text" placeholder="Favourite dish" />
+                        <label>Your Favourite Dish</label>
                     </div>
-                </div>
-
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6">
-                        <div class="form-floating">
-                            <input name="NumberOfPeopleICookFor" type="number" class="form-control" value="2" />
-                            <label>Cooking for how many?</label>
+                    <div class="mb-3">
+                        <div class="field-section">Dietary Lifestyle</div>
+                        <div class="chip-group">
+                            @foreach (var d in new[]{"Vegan","Vegetarian","Halal","Kosher","Keto","Paleo","Gluten-Free","Dairy-Free"})
+                            {
+                                <input type="checkbox" class="chip-input" name="DietaryRestrictions" value="@d" id="d-@d">
+                                <label class="chip-label" for="d-@d">@d</label>
+                            }
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-floating">
-                            <select name="HealthGoal" class="form-select">
-                                <option value="Weight_Loss">Weight Loss</option>
-                                <option value="Muscle_Gain">Muscle Gain</option>
-                                <option value="Better_Energy">Better Energy</option>
+                    <div class="field-row">
+                        <div class="auth-field">
+                            <input name="NumberOfPeopleICookFor" type="number" min="1" max="20" value="2" placeholder="2" />
+                            <label>Cook for how many?</label>
+                        </div>
+                        <div class="auth-field">
+                            <select name="HealthGoal" style="padding:.95rem 1rem .4rem;-webkit-appearance:none">
+                                <option value="Weight_Loss">🏃 Weight Loss</option>
+                                <option value="Muscle_Gain">💪 Muscle Gain</option>
+                                <option value="Better_Energy">⚡ Better Energy</option>
+                                <option value="Balanced_Diet">⚖️ Balanced Diet</option>
                             </select>
                             <label>Health Goal</label>
                         </div>
                     </div>
-                </div>
-
-                <button type="submit" class="btn btn-orange w-100 py-3 rounded-pill fw-bold hover-up">
-                    Continue <i class="bi bi-arrow-right ms-1"></i>
-                </button>
-            </form>
-        }
-
-        @if (step == 3)
-        {
-            <form asp-action="RegisterStep3" method="post" class="animate-fade-in">
-                @Html.AntiForgeryToken()
-                <div class="mb-4">
-                    <label class="fw-bold text-dark mb-3 d-block">Allergies (Critical Safety)</label>
-                    <div class="d-flex flex-wrap gap-2">
-                        @foreach (var a in new[] { "Peanuts","Milk","Eggs","Gluten","Soy","Shellfish" })
-                        {
-                            <input type="checkbox" class="btn-check" name="Allergies" value="@a" id="all-@a">
-                            <label class="btn btn-outline-danger rounded-pill btn-sm px-3" for="all-@a">@a</label>
-                        }
+                    <div class="mb-3">
+                        <div class="field-section">Favourite Cuisines</div>
+                        <div class="chip-group">
+                            @foreach (var c in new[]{"African","Asian","Mediterranean","Latin","Middle Eastern","European","Indian","Japanese"})
+                            {
+                                <input type="checkbox" class="chip-input" name="FavouriteCuisines" value="@c" id="c-@c">
+                                <label class="chip-label" for="c-@c">@c</label>
+                            }
+                        </div>
                     </div>
-                </div>
+                    <div class="auth-field">
+                        <select name="SkillLevel" style="padding:.95rem 1rem .4rem;-webkit-appearance:none">
+                            <option value="0">🌱 Beginner</option>
+                            <option value="1">🍳 Home Cook</option>
+                            <option value="2">👨‍🍳 Intermediate</option>
+                            <option value="3">⭐ Advanced</option>
+                            <option value="4">🎖️ Professional</option>
+                        </select>
+                        <label>Cooking Skill</label>
+                    </div>
+                    <button type="submit" class="btn-auth">Continue <i class="bi bi-arrow-right"></i></button>
+                </form>
+            }
 
-                <div class="form-check mb-3">
-                    <input class="form-check-input custom-checkbox" type="checkbox" required id="terms" />
-                    <label class="form-check-label small text-muted" for="terms">
-                        I agree to the <a href="#" class="text-orange">Terms</a> and <a href="#" class="text-orange">Privacy Policy</a>
-                    </label>
-                </div>
+            @* ════ STEP 3 ════ *@
+            @if (step == 3)
+            {
+                <form asp-action="RegisterStep3" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <div class="field-section" style="color:#ff8c98">⚠️ Allergies (Critical Safety)</div>
+                        <div class="chip-group">
+                            @foreach (var a in new[]{"Peanuts","Tree Nuts","Milk","Eggs","Gluten","Soy","Shellfish","Fish","Sesame"})
+                            {
+                                <input type="checkbox" class="chip-input" name="Allergies" value="@a" id="a-@a">
+                                <label class="chip-label chip-danger" for="a-@a">@a</label>
+                            }
+                        </div>
+                    </div>
+                    <div class="auth-field">
+                        <input name="Bio" type="text" placeholder="Short bio (optional)" maxlength="200" />
+                        <label>About You (optional)</label>
+                    </div>
+                    <div class="auth-field">
+                        <input name="Hobbies" type="text" placeholder="e.g. hiking, photography" />
+                        <label>Hobbies (optional)</label>
+                    </div>
+                    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:1rem;margin-bottom:1rem">
+                        <label style="display:flex;align-items:flex-start;gap:.6rem;cursor:pointer;color:rgba(255,255,255,.6);font-size:.84rem">
+                            <input type="checkbox" required id="terms-check" style="width:17px;height:17px;accent-color:#E8630A;margin-top:.15rem;flex-shrink:0" />
+                            <span>I agree to the <a href="/Home/Privacy" style="color:#E8630A" target="_blank">Terms of Service</a> and <a href="/Home/Privacy" style="color:#E8630A" target="_blank">Privacy Policy</a>. I confirm I am 13 years or older.</span>
+                        </label>
+                    </div>
+                    <div style="background:rgba(232,99,10,.08);border:1px solid rgba(232,99,10,.2);border-radius:12px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:.8rem;color:rgba(255,255,255,.5);display:flex;gap:.5rem;align-items:center">
+                        <i class="bi bi-shield-lock-fill" style="color:#E8630A;flex-shrink:0"></i>
+                        Your allergy data is encrypted and only used to personalise recipe safety warnings.
+                    </div>
+                    <button type="submit" class="btn-auth">
+                        <i class="bi bi-check-circle-fill"></i> Complete Registration
+                    </button>
+                </form>
+            }
 
-                <button type="submit" class="btn btn-orange w-100 py-3 rounded-pill fw-bold hover-up">
-                    Complete Registration <i class="bi bi-check-lg ms-1"></i>
-                </button>
-            </form>
-        }
-
-        <p class="text-center mt-4 mb-0 text-muted small">
-            Already have an account? 
-            <a asp-controller="Account" asp-action="Login" class="text-orange fw-bold text-decoration-none">Sign In</a>
-        </p>
+            <div class="auth-footer-link">
+                Already have an account? <a asp-action="Login">Sign In</a>
+            </div>
+        </div>
     </div>
 </div>
 
-<style>
-    .auth-wrapper { background: linear-gradient(135deg, #FFF5F0 0%, #FFE4D6 100%); position: relative; overflow: hidden; }
-    .auth-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 25px 50px -12px rgba(232, 99, 10, 0.15); }
-    .auth-logo { font-size: 3rem; }
-
-    .btn-social { height: 50px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
-    .btn-google { background: white; border: 1px solid #E5E7EB; color: #374151; }
-    
-    .separator { text-align: center; position: relative; z-index: 1; }
-    .separator::before { content: ""; position: absolute; left: 0; top: 50%; width: 100%; height: 1px; background: #E5E7EB; z-index: -1; }
-    .separator span { background: #FFF9F7; padding: 0 15px; color: #9CA3AF; font-size: 0.8rem; }
-
-    .form-control, .form-select { border-radius: 12px; border: 1.5px solid #F3F4F6; }
-    .form-control:focus, .form-select:focus { border-color: #E8630A; box-shadow: 0 0 0 4px rgba(232, 99, 10, 0.1); }
-
-    .btn-outline-orange { border-color: #E8630A; color: #E8630A; }
-    .btn-check:checked + .btn-outline-orange { background-color: #E8630A; border-color: #E8630A; color: white; }
-    
-    .btn-outline-danger { border-color: #dc3545; color: #dc3545; }
-    .btn-check:checked + .btn-outline-danger { background-color: #dc3545; border-color: #dc3545; color: white; }
-
-    .animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-    @@keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-fade-in { animation: fadeIn 0.4s ease-out; }
-    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-</style>
-
 <script>
-    function checkStrength(v) {
-        const meter = document.getElementById('pwd-meter');
-        const strength = [/[A-Z]/.test(v), /\d/.test(v), /[^a-zA-Z\d]/.test(v), v.length >= 8].filter(Boolean).length;
-        const colors = ['#f3f4f6','#dc3545','#ffc107','#28a745','#059669'];
-        meter.style.width = (strength * 25) + '%';
-        meter.style.backgroundColor = colors[strength];
+function togglePwd(id, btn) {
+    const inp = document.getElementById(id);
+    const ico = btn.querySelector('i');
+    const hide = inp.type === 'password';
+    inp.type = hide ? 'text' : 'password';
+    ico.className = (hide ? 'bi bi-eye-slash' : 'bi bi-eye') + ' ';
+    ico.style.fontSize = '1rem';
+}
+
+function calcStrength(v) {
+    const checks = [v.length >= 8, /[A-Z]/.test(v), /\d/.test(v), /[^a-zA-Z\d]/.test(v)];
+    const score = checks.filter(Boolean).length;
+    const fill  = document.getElementById('s-fill');
+    const hint  = document.getElementById('s-hint');
+    if (!fill) return;
+    const colors = ['#dc3545','#fd7e14','#ffc107','#20c997'];
+    const labels = ['Too weak','Fair — add uppercase & numbers','Good — add a symbol','Strong ✓'];
+    fill.style.width   = (score * 25) + '%';
+    fill.style.background = colors[score - 1] || 'rgba(255,255,255,.1)';
+    if (hint) hint.textContent = score > 0 ? labels[score - 1] : 'Min. 8 chars, uppercase, number, symbol';
+}
+
+// Password match validation on step 1
+document.querySelector('form')?.addEventListener('submit', function(e) {
+    const pwd  = document.getElementById('reg-pwd');
+    const pwd2 = document.getElementById('reg-pwd2');
+    if (pwd && pwd2 && pwd.value !== pwd2.value) {
+        e.preventDefault();
+        pwd2.style.borderColor = '#dc3545';
+        pwd2.style.boxShadow   = '0 0 0 3px rgba(220,53,69,.2)';
+        const hint = pwd2.parentElement.querySelector('.strength-hint');
+        const msg  = document.createElement('div');
+        msg.style.cssText = 'font-size:.72rem;color:#ff8c98;margin-top:.2rem';
+        msg.textContent = 'Passwords do not match';
+        if (!pwd2.parentElement.querySelector('.mismatch-msg')) {
+            msg.className = 'mismatch-msg';
+            pwd2.parentElement.appendChild(msg);
+        }
     }
+});
 </script>

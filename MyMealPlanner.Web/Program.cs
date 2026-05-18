@@ -134,6 +134,7 @@ try
         o.ExpireTimeSpan   = TimeSpan.FromDays(14);
         o.SlidingExpiration = true;
         o.Cookie.HttpOnly  = true;
+        o.Cookie.SameSite  = SameSiteMode.Lax; // Lax is better for OAuth redirects
         o.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
             ? CookieSecurePolicy.None
             : CookieSecurePolicy.Always;
@@ -144,6 +145,7 @@ try
         o.IdleTimeout = TimeSpan.FromMinutes(30);
         o.Cookie.HttpOnly  = true;
         o.Cookie.IsEssential = true;
+        o.Cookie.SameSite  = SameSiteMode.Strict;
     });
 
     // ── Cache (in-memory for dev, Redis for prod) ─────────────

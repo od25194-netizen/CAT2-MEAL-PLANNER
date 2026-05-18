@@ -226,9 +226,13 @@ public class AccountController : Controller
         if (result.IsLockedOut)
         {
             _logger.LogWarning("[Login] {Email} locked out", model.Email);
-            TempData["Error"] = "Account locked after too many failed attempts. Try again in 15 minutes.";
+            TempData["Lockout"] = "Account locked after too many failed attempts. Try again in 15 minutes.";
             return View(model);
         }
+
+        // Timing attack mitigation: Add a small random delay on failed attempts
+        // This makes it harder for attackers to enumerate accounts based on response time
+        await Task.Delay(new Random().Next(200, 500));
 
         ModelState.AddModelError("", "Invalid email or password.");
         return View(model);
