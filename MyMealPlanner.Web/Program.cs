@@ -276,6 +276,20 @@ try
     app.MapHub<NotificationHub>("/hubs/notifications");
     app.MapHub<MiaHub>("/hubs/mia");
 
+    // ── Schedule Background Jobs (Scraping, AI, etc.) ─────────
+    using (var scope = app.Services.CreateScope())
+    {
+        var recurringJobs = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+        
+        // Run scraper every 6 hours
+        recurringJobs.AddOrUpdate<IRecipeScraperService>(
+            "RunFullScrapeCycle",
+            scraper => scraper.ScrapeAllSourcesAsync(CancellationToken.None),
+            "0 */6 * * *"); // Cron: Every 6 hours at minute 0
+            
+        // You could also add daily joke fetching, news, etc. here if there are dedicated methods
+    }
+
     await app.RunAsync();
 }
 catch (Exception ex) { Log.Fatal(ex, "MyMealPlanner startup failed"); }
