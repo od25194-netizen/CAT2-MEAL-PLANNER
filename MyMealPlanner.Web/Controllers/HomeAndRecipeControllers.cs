@@ -121,15 +121,18 @@ public class RecipeController : Controller
     private readonly ApplicationDbContext _db;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IYouTubeService _youtube;
+    private readonly ISpoonacularService _spoonacular;
 
     public RecipeController(
         ApplicationDbContext db,
         UserManager<ApplicationUser> userManager,
-        IYouTubeService youtube)
+        IYouTubeService youtube,
+        ISpoonacularService spoonacular)
     {
         _db          = db;
         _userManager = userManager;
         _youtube     = youtube;
+        _spoonacular = spoonacular;
     }
 
     // ── Browse / Search ──────────────────────────────────────
@@ -381,6 +384,27 @@ public class RecipeController : Controller
 
         TempData["Success"] = "Thank you! Your recipe is under review. 🍽️";
         return RedirectToAction("Index");
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ImportSpoonacular(string keyword)
+    {
+        if (string.IsNullOrWhiteSpace(keyword))
+            return Json(new { success = false, message = "Please enter a valid recipe name or keyword." });
+
+        var recipe = await _spoonacular.SearchAndImportRecipeAsync(keyword);
+        if (recipe == null)
+            return Json(new { success = false, message = "Could not find or import any matching recipe from Spoonacular. Try another keyword!" });
+
+        return Json(new { 
+            success = true, 
+            recipeId = recipe.Id, 
+            slug = recipe.Slug,
+            title = recipe.Title,
+            url = Url.Action("Details", new { id = recipe.Id, slug = recipe.Slug })
+        });
     }
 
     // ── Cook Log ──────────────────────────────────────────────

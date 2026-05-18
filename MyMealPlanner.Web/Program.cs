@@ -22,6 +22,7 @@ using MyMealPlanner.Services.PDF;
 using MyMealPlanner.Services.Ranking;
 using MyMealPlanner.Services.Scraper;
 using MyMealPlanner.Services.Social;
+using MyMealPlanner.Services.Spoonacular;
 using MyMealPlanner.Services.YouTube;
 using MyMealPlanner.Web.Hubs;
 using Serilog;
@@ -231,6 +232,7 @@ try
     builder.Services.AddScoped<NearbyFoodService>();
     builder.Services.AddScoped<IEmailService,             EmailService>();
     builder.Services.AddScoped<IRecipePromotionService,   RecipePromotionService>();
+    builder.Services.AddScoped<ISpoonacularService,       SpoonacularService>();
 
     var app = builder.Build();
 

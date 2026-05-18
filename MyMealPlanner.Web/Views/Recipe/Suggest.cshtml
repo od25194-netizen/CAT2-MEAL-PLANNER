@@ -8,6 +8,27 @@
         If approved, it will be published on My Meal Planner and attributed to you. 🌍
     </p>
 
+    <!-- Spoonacular Auto-Importer -->
+    <div class="card border-0 rounded-3 mb-4 text-white shadow-sm" style="background: linear-gradient(135deg, #FF6F00, #E65100)">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="fs-4">✨</div>
+                <h5 class="fw-bold mb-0">Mia's Spoonacular Auto-Importer</h5>
+            </div>
+            <p class="card-text opacity-90 small">
+                Don't want to type it all out manually? Type any food name (e.g. <em>Chicken Alfredo</em> or <em>Tacos</em>) and let Mia instantly fetch, structure, and publish a high-quality global recipe!
+            </p>
+            <div class="input-group">
+                <input type="text" id="spoonacular-keyword" class="form-control border-0 px-3 py-2" placeholder="Enter dish name (e.g. Sushi, Lasagna, Pad Thai)..." style="border-radius: 6px 0 0 6px" />
+                <button class="btn btn-dark border-0 px-4 fw-bold" type="button" id="btn-spoonacular-import" style="border-radius: 0 6px 6px 0">
+                    <span id="import-btn-text">🚀 Import Instantly</span>
+                    <span id="import-btn-spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                </button>
+            </div>
+            <div id="import-feedback" class="mt-2 small fw-bold d-none"></div>
+        </div>
+    </div>
+
     <div class="bg-white rounded-3 shadow-sm p-4">
         <form asp-action="Suggest" method="post">
             @Html.AntiForgeryToken()
@@ -169,5 +190,64 @@ document.getElementById('add-step')?.addEventListener('click', () => {
 function renumberSteps() {
     document.querySelectorAll('.step-num').forEach((el, i) => el.textContent = i + 1);
 }
+
+// Spoonacular Auto-Importer
+document.getElementById('btn-spoonacular-import')?.addEventListener('click', async () => {
+    const keywordInput = document.getElementById('spoonacular-keyword');
+    const keyword = keywordInput.value.trim();
+    if (!keyword) {
+        showFeedback("Please enter a recipe keyword!", "text-warning");
+        return;
+    }
+
+    const btnText = document.getElementById('import-btn-text');
+    const btnSpinner = document.getElementById('import-btn-spinner');
+    const importBtn = document.getElementById('btn-spoonacular-import');
+    const feedback = document.getElementById('import-feedback');
+
+    // Show loading state
+    btnText.classList.add('d-none');
+    btnSpinner.classList.remove('d-none');
+    importBtn.disabled = true;
+    showFeedback("Mia is querying Spoonacular and parsing ingredients...", "text-white");
+
+    try {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const formData = new FormData();
+        formData.append('keyword', keyword);
+        if (token) formData.append('__RequestVerificationToken', token);
+
+        const response = await fetch('/Recipe/ImportSpoonacular', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showFeedback(`🎉 Success! Found and imported "${result.title}" perfectly! Redirecting...`, "text-warning");
+            setTimeout(() => {
+                window.location.href = result.url;
+            }, 1800);
+        } else {
+            showFeedback(result.message || "Failed to import recipe.", "text-warning");
+            resetButton();
+        }
+    } catch (e) {
+        showFeedback("An unexpected error occurred during import.", "text-danger");
+        resetButton();
+    }
+
+    function showFeedback(msg, cssClass) {
+        feedback.textContent = msg;
+        feedback.className = "mt-2 small fw-bold " + cssClass;
+        feedback.classList.remove('d-none');
+    }
+
+    function resetButton() {
+        btnText.classList.remove('d-none');
+        btnSpinner.classList.add('d-none');
+        importBtn.disabled = false;
+    }
+});
 </script>
 }
