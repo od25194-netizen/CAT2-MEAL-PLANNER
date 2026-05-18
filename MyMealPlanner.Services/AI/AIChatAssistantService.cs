@@ -70,7 +70,7 @@ public class AIChatAssistantService : IAIChatAssistantService
             var messages = BuildMessages(systemPrompt, message, history);
             var body = JsonSerializer.Serialize(new
             {
-                model    = "deepseek-chat",
+                model    = _config["AI:DeepSeekModel"] ?? "deepseek-chat",
                 messages,
                 max_tokens = 800,
                 temperature = 0.7
