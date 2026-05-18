@@ -25,19 +25,17 @@ public class RecipePromotionService : IRecipePromotionService
             Title = suggestion.Title,
             Slug = suggestion.Title.ToLower().Replace(" ", "-"), // Basic slugification
             Description = suggestion.Description,
-            CulturalStory = suggestion.CulturalStory,
-            OriginCountry = suggestion.OriginCountry,
-            OriginCountryCode = suggestion.OriginCountryCode,
-            OriginContinent = suggestion.OriginContinent,
-            MealType = suggestion.MealType,
-            DifficultyLevel = suggestion.DifficultyLevel,
-            PrepTimeMinutes = suggestion.PrepTimeMinutes,
-            CookTimeMinutes = suggestion.CookTimeMinutes,
+            OriginCountry = suggestion.CountryOfOrigin ?? "Unknown",
+            OriginContinent = "Unknown",
+            MealType = MealType.Dinner,
+            DifficultyLevel = DifficultyLevel.Intermediate,
+            PrepTimeMinutes = 15,
+            CookTimeMinutes = 30,
             IsApproved = true,
             IsPublished = true,
             SubmittedByUserId = suggestion.SubmittedByUserId,
             CreatedAt = DateTime.UtcNow,
-            Source = RecipeSource.CommunitySuggestion
+            Source = RecipeSource.UserSubmitted
         };
 
         _db.Recipes.Add(recipe);

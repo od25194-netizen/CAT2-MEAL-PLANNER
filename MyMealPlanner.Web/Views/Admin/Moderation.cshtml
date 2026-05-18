@@ -34,9 +34,9 @@
                         <tr id="row-@item.Id">
                             <td class="ps-4">
                                 <div class="fw-bold">@item.Title</div>
-                                <div class="small text-muted">@item.Summary?.Substring(0, Math.Min(50, item.Summary.Length))...</div>
+                                <div class="small text-muted">@item.Description?.Substring(0, Math.Min(50, item.Description.Length))...</div>
                             </td>
-                            <td><span class="badge bg-light text-dark fw-normal border">@item.SourcePlatform</span></td>
+                            <td><span class="badge bg-light text-dark fw-normal border">@item.Source</span></td>
                             <td>@item.CreatedAt.ToShortDateString()</td>
                             <td class="text-end pe-4">
                                 <button class="btn btn-sm btn-success rounded-pill px-3 me-1" onclick="moderate(@item.Id, 'recipe', true)">Approve</button>
@@ -53,7 +53,7 @@
                         <tr id="row-@item.Id">
                             <td class="ps-4">
                                 <div class="fw-bold">@item.Title</div>
-                                <div class="small text-muted">@item.Category</div>
+                                <div class="small text-muted">@item.CountryOfOrigin</div>
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">

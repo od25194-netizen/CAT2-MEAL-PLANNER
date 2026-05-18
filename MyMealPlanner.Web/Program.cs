@@ -11,6 +11,7 @@ using MyMealPlanner.Core.Interfaces;
 using MyMealPlanner.Core.Models;
 using MyMealPlanner.Infrastructure.Data;
 using MyMealPlanner.Infrastructure.Migrations;
+using MyMealPlanner.Services;
 using MyMealPlanner.Services.AI;
 using MyMealPlanner.Services.Cost;
 using MyMealPlanner.Services.Email;
