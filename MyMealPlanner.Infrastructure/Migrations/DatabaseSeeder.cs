@@ -256,6 +256,8 @@ public static class DatabaseSeeder
                 CreatedAt  = DateTime.UtcNow
             });
         }
+    }
+
     private static async Task SeedRecipesAsync(ApplicationDbContext db)
     {
         if (await db.Recipes.AnyAsync()) return;
@@ -270,8 +272,8 @@ public static class DatabaseSeeder
                 OriginCountry = "Nigeria",
                 OriginCountryCode = "NG",
                 OriginContinent = "Africa",
-                MealType = MealType.MainCourse,
-                DifficultyLevel = DifficultyLevel.Medium,
+                MealType = MealType.Dinner,
+                DifficultyLevel = DifficultyLevel.Intermediate,
                 PrepTimeMinutes = 15,
                 CookTimeMinutes = 45,
                 IsPublished = true,
@@ -287,8 +289,8 @@ public static class DatabaseSeeder
                 OriginCountry = "Japan",
                 OriginCountryCode = "JP",
                 OriginContinent = "Asia",
-                MealType = MealType.MainCourse,
-                DifficultyLevel = DifficultyLevel.Hard,
+                MealType = MealType.Dinner,
+                DifficultyLevel = DifficultyLevel.Advanced,
                 PrepTimeMinutes = 30,
                 CookTimeMinutes = 120,
                 IsPublished = true,
@@ -304,8 +306,8 @@ public static class DatabaseSeeder
                 OriginCountry = "Italy",
                 OriginCountryCode = "IT",
                 OriginContinent = "Europe",
-                MealType = MealType.MainCourse,
-                DifficultyLevel = DifficultyLevel.Medium,
+                MealType = MealType.Dinner,
+                DifficultyLevel = DifficultyLevel.Intermediate,
                 PrepTimeMinutes = 20,
                 CookTimeMinutes = 15,
                 IsPublished = true,
@@ -320,7 +322,7 @@ public static class DatabaseSeeder
                 OriginCountry = "Mexico",
                 OriginCountryCode = "MX",
                 OriginContinent = "Americas",
-                MealType = MealType.MainCourse,
+                MealType = MealType.Dinner,
                 DifficultyLevel = DifficultyLevel.Easy,
                 PrepTimeMinutes = 20,
                 CookTimeMinutes = 10,
@@ -365,6 +367,8 @@ public static class DatabaseSeeder
             }
         );
         await db.SaveChangesAsync();
+    }
+
     private static async Task SeedDietPlansAsync(ApplicationDbContext db)
     {
         if (await db.DietPlans.AnyAsync()) return;
