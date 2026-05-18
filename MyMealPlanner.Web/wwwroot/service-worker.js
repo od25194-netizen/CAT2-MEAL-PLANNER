@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
     '/js/site.js',
     '/manifest.json',
     OFFLINE_PAGE,
+    '/images/icon.svg',
 ];
 
 // ── Install: cache static assets ─────────────────────────────
@@ -109,8 +110,8 @@ self.addEventListener('push', event => {
     event.waitUntil(
         self.registration.showNotification(data.title ?? 'My Meal Planner 🍽️', {
             body:    data.body    ?? 'New content is waiting for you!',
-            icon:    '/images/icon-192.png',
-            badge:   '/images/icon-192.png',
+            icon:    '/images/icon.svg',
+            badge:   '/images/icon.svg',
             data:    { url: data.actionUrl ?? '/' },
             vibrate: [100, 50, 100],
             actions: data.actionUrl ? [{ action: 'open', title: 'View' }] : []

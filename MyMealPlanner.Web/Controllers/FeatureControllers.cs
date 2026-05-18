@@ -22,21 +22,19 @@ public class HealthController : Controller
     { _db = db; _users = users; }
 
     // Eat Healthy hub home
+    [AllowAnonymous]
     public IActionResult Index() => View();
 
+    [AllowAnonymous]
     public async Task<IActionResult> DietPlans()
     {
         var plans = await _db.DietPlans.OrderBy(p => p.PlanName).ToListAsync();
         return View(plans);
     }
 
-    public async Task<IActionResult> Allergies()
-    {
-        var guides = await _db.AllergyGuides.OrderBy(a => a.AllergenType).ToListAsync();
-        return View(guides);
-    }
 
     // ── Nutrient Navigator — click a nutrient, see all foods ──
+    [AllowAnonymous]
     public async Task<IActionResult> Nutrients(NutrientCategory? category)
     {
         var allCategories = Enum.GetValues<NutrientCategory>().ToList();
@@ -64,6 +62,7 @@ public class HealthController : Controller
     }
 
     // ── Allergy Guide ─────────────────────────────────────────
+    [AllowAnonymous]
     public async Task<IActionResult> Allergies(AllergenType? type)
     {
         var guides = await _db.AllergyGuides.ToListAsync();
@@ -75,6 +74,7 @@ public class HealthController : Controller
     }
 
     // ── Food as Medicine ─────────────────────────────────────
+    [AllowAnonymous]
     public async Task<IActionResult> FoodAsMedicine()
     {
         var benefits = await _db.FoodHealthBenefits.ToListAsync();
@@ -82,6 +82,7 @@ public class HealthController : Controller
     }
 
     // ── When To Eat ───────────────────────────────────────────
+    [AllowAnonymous]
     public async Task<IActionResult> WhenToEat()
     {
         var guides = await _db.FoodTimingGuides
@@ -91,6 +92,7 @@ public class HealthController : Controller
     }
 
     // ── Age Bracket Plans ─────────────────────────────────────
+    [AllowAnonymous]
     public async Task<IActionResult> AgePlan(AgeBracket? bracket)
     {
         var user = await _users.GetUserAsync(User);
@@ -108,6 +110,7 @@ public class HealthController : Controller
     }
 
     // ── Obesity Fighter ───────────────────────────────────────
+    [AllowAnonymous]
     public async Task<IActionResult> ObesityFighter()
     {
         var recipes = await _db.Recipes
@@ -119,9 +122,11 @@ public class HealthController : Controller
     }
 
     // ── Workout Nutrition ────────────────────────────────────
+    [AllowAnonymous]
     public IActionResult Workout() => View();
 
     // ── Pet Health ────────────────────────────────────────────
+    [AllowAnonymous]
     public IActionResult Pets() => View();
 }
 
@@ -138,6 +143,7 @@ public class ExploreController : Controller
         UserManager<ApplicationUser> users)
     { _db = db; _ranking = ranking; _users = users; }
 
+    [AllowAnonymous]
     public async Task<IActionResult> Index(DiscoveryScope scope = DiscoveryScope.Global,
         string? continent = null, string? country = null)
     {
@@ -172,6 +178,7 @@ public class ExploreController : Controller
         return View();
     }
 
+    [AllowAnonymous]
     public async Task<IActionResult> Rankings(RankingScope scope = RankingScope.Global,
         string? scopeValue = null, int page = 1)
     {
@@ -186,6 +193,7 @@ public class ExploreController : Controller
         return View(paged);
     }
 
+    [AllowAnonymous]
     public async Task<IActionResult> CulturalMap()
     {
         var continentData = await _db.Recipes
@@ -311,6 +319,7 @@ public class JokesController : Controller
     public JokesController(ApplicationDbContext db, UserManager<ApplicationUser> users)
     { _db = db; _users = users; }
 
+    [AllowAnonymous]
     public async Task<IActionResult> Index(string? category, int page = 1)
     {
         int pageSize = 10;
@@ -347,7 +356,7 @@ public class JokesController : Controller
         return Json(new { likeCount = count });
     }
 
-    [HttpGet]
+    [HttpGet, AllowAnonymous]
     public async Task<IActionResult> Random()
     {
         var joke = await _db.CookingJokes

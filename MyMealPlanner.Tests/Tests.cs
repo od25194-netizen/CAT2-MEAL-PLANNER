@@ -1,9 +1,16 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Moq.Protected;
+using System.Net.Http;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using MyMealPlanner.Core.Enums;
 using MyMealPlanner.Core.Models;
+using MyMealPlanner.Core.DTOs;
 using MyMealPlanner.Infrastructure.Data;
 using MyMealPlanner.Services.AI;
 using MyMealPlanner.Services.Cost;
@@ -559,17 +566,279 @@ public class ShoppingListTests
     [InlineData("tomato paste",      "Canned & Sauces")]
     public void GuessStoreSection_ReturnsCorrectCategory(string ingredient, string expectedSection)
     {
-        // Mirrors MealPlanController.GuessStoreSection
-        string section = ingredient.ToLowerInvariant() switch
-        {
-            var n when new[] { "chicken","beef","pork","lamb","fish","prawn","shrimp","salmon","tuna" }.Any(n.Contains) => "Meat & Fish",
-            var n when new[] { "milk","yoghurt","cream","cheese","butter","egg" }.Any(n.Contains) => "Dairy & Eggs",
-            var n when new[] { "rice","pasta","flour","oat","bread","noodle" }.Any(n.Contains) => "Grains & Staples",
-            var n when new[] { "oil","salt","pepper","spice","herb","cumin","turmeric","paprika","ginger" }.Any(n.Contains) => "Spices & Oils",
-            var n when new[] { "can","tin","sauce","paste","stock","broth" }.Any(n.Contains) => "Canned & Sauces",
-            _ => "Produce"
-        };
+        // Mirrors MealPlanAndSearchControllers.GuessStoreSection
+        var n = ingredient.ToLowerInvariant();
+        string section;
+        if (new[] { "chicken", "beef", "pork", "lamb", "fish", "prawn", "shrimp", "salmon", "tuna" }.Any(x => n.Contains(x))) section = "Meat & Fish";
+        else if (new[] { "milk", "yoghurt", "cream", "cheese", "butter", "egg" }.Any(x => n.Contains(x))) section = "Dairy & Eggs";
+        else if (new[] { "rice", "pasta", "flour", "oat", "bread", "noodle" }.Any(x => n.Contains(x))) section = "Grains & Staples";
+        else if (new[] { "can", "tin", "sauce", "paste", "stock", "broth" }.Any(x => n.Contains(x))) section = "Canned & Sauces";
+        else if (new[] { "apple", "banana", "tomato", "onion", "garlic", "carrot", "pepper", "lettuce", "spinach" }.Any(x => n.Contains(x))) section = "Produce";
+        else if (new[] { "oil", "salt", "spice", "herb", "cumin", "turmeric", "paprika", "ginger" }.Any(x => n.Contains(x))) section = "Spices & Oils";
+        else section = "Other";
 
         section.Should().Be(expectedSection);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI CHAT ASSISTANT SERVICE TESTS
+// ═══════════════════════════════════════════════════════════════
+public class AIChatAssistantServiceTests
+{
+    private readonly ApplicationDbContext _db;
+    private readonly Mock<IConfiguration> _configMock;
+    private readonly Mock<IHttpClientFactory> _httpFactoryMock;
+    private readonly Mock<ILogger<AIChatAssistantService>> _loggerMock;
+
+    public AIChatAssistantServiceTests()
+    {
+        _db = TestDbFactory.Create();
+        _configMock = new Mock<IConfiguration>();
+        _httpFactoryMock = new Mock<IHttpClientFactory>();
+        _loggerMock = new Mock<ILogger<AIChatAssistantService>>();
+
+        var user = new ApplicationUser
+        {
+            Id = "test-user-id",
+            UserName = "testuser@example.com",
+            Email = "testuser@example.com",
+            FullName = "Test User",
+            ChefLevel = ChefLevel.Level4_ConfidentCook,
+            AllergiesJson = "[\"Peanuts\"]",
+            DietaryRestrictionsJson = "[\"Vegan\"]"
+        };
+        _db.Users.Add(user);
+        _db.SaveChanges();
+    }
+
+    private void SetupEmptyKeys()
+    {
+        _configMock.Setup(c => c["AI:DeepSeekApiKey"]).Returns((string?)null);
+        _configMock.Setup(c => c["AI:DashScopeApiKey"]).Returns((string?)null);
+        _configMock.Setup(c => c["AI:GroqApiKey"]).Returns((string?)null);
+        _configMock.Setup(c => c["AI:OllamaBaseUrl"]).Returns((string?)null);
+        _configMock.Setup(c => c["AI:OpenRouterApiKey"]).Returns((string?)null);
+        _configMock.Setup(c => c["AI:ClaudeApiKey"]).Returns((string?)null);
+    }
+
+    [Fact]
+    public async Task ChatAsync_NoApiKeys_ReturnsFallbackResponse()
+    {
+        SetupEmptyKeys();
+        var handlerMock = new Mock<HttpMessageHandler>();
+        var client = new HttpClient(handlerMock.Object);
+        _httpFactoryMock.Setup(f => f.CreateClient("AIClient")).Returns(client);
+
+        var svc = new AIChatAssistantService(_db, _configMock.Object, _httpFactoryMock.Object, _loggerMock.Object);
+
+        var resAllergy = await svc.ChatAsync("test-user-id", "What about peanut allergy?", new List<ChatTurn>());
+        var resIngredient = await svc.ChatAsync("test-user-id", "Can I substitute ingredients?", new List<ChatTurn>());
+        var resDiet = await svc.ChatAsync("test-user-id", "Is this a healthy calorie option?", new List<ChatTurn>());
+        var resDefault = await svc.ChatAsync("test-user-id", "Hello Mia!", new List<ChatTurn>());
+
+        resAllergy.Should().Contain("Allergy Guide");
+        resIngredient.Should().Contain("ingredients");
+        resDiet.Should().Contain("Health Hub");
+        resDefault.Should().Contain("I'm Mia");
+    }
+
+    [Fact]
+    public async Task ChatAsync_DeepSeekApiKeyProvided_CallsDeepSeekApi()
+    {
+        SetupEmptyKeys();
+        _configMock.Setup(c => c["AI:DeepSeekApiKey"]).Returns("sk-deepseek-test-key");
+
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString().Contains("api.deepseek.com")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(
+                    "{\"choices\":[{\"message\":{\"content\":\"Hello from DeepSeek!\"}}]}",
+                    System.Text.Encoding.UTF8,
+                    "application/json"
+                )
+            });
+
+        var client = new HttpClient(handlerMock.Object);
+        _httpFactoryMock.Setup(f => f.CreateClient("AIClient")).Returns(client);
+
+        var svc = new AIChatAssistantService(_db, _configMock.Object, _httpFactoryMock.Object, _loggerMock.Object);
+
+        var res = await svc.ChatAsync("test-user-id", "Hello", new List<ChatTurn>());
+        res.Should().Be("Hello from DeepSeek!");
+    }
+
+    [Fact]
+    public async Task ChatAsync_QwenApiKeyProvided_CallsQwenApi()
+    {
+        SetupEmptyKeys();
+        _configMock.Setup(c => c["AI:DashScopeApiKey"]).Returns("qwen-test-key");
+
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString().Contains("dashscope.aliyuncs.com")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(
+                    "{\"output\":{\"choices\":[{\"message\":{\"content\":\"Hello from Qwen!\"}}]}}",
+                    System.Text.Encoding.UTF8,
+                    "application/json"
+                )
+            });
+
+        var client = new HttpClient(handlerMock.Object);
+        _httpFactoryMock.Setup(f => f.CreateClient("AIClient")).Returns(client);
+
+        var svc = new AIChatAssistantService(_db, _configMock.Object, _httpFactoryMock.Object, _loggerMock.Object);
+
+        var res = await svc.ChatAsync("test-user-id", "Hello", new List<ChatTurn>());
+        res.Should().Be("Hello from Qwen!");
+    }
+
+    [Fact]
+    public async Task ChatAsync_GroqApiKeyProvided_CallsGroqApi()
+    {
+        SetupEmptyKeys();
+        _configMock.Setup(c => c["AI:GroqApiKey"]).Returns("groq-test-key");
+
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString().Contains("api.groq.com")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(
+                    "{\"choices\":[{\"message\":{\"content\":\"Hello from Groq!\"}}]}",
+                    System.Text.Encoding.UTF8,
+                    "application/json"
+                )
+            });
+
+        var client = new HttpClient(handlerMock.Object);
+        _httpFactoryMock.Setup(f => f.CreateClient("AIClient")).Returns(client);
+
+        var svc = new AIChatAssistantService(_db, _configMock.Object, _httpFactoryMock.Object, _loggerMock.Object);
+
+        var res = await svc.ChatAsync("test-user-id", "Hello", new List<ChatTurn>());
+        res.Should().Be("Hello from Groq!");
+    }
+
+    [Fact]
+    public async Task ChatAsync_OllamaBaseUrlProvided_CallsOllamaApi()
+    {
+        SetupEmptyKeys();
+        _configMock.Setup(c => c["AI:OllamaBaseUrl"]).Returns("http://localhost:11434");
+        _configMock.Setup(c => c["AI:OllamaModel"]).Returns("llama3");
+
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString().Contains("11434")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(
+                    "{\"response\":\"Hello from Ollama!\"}",
+                    System.Text.Encoding.UTF8,
+                    "application/json"
+                )
+            });
+
+        var client = new HttpClient(handlerMock.Object);
+        _httpFactoryMock.Setup(f => f.CreateClient("AIClient")).Returns(client);
+
+        var svc = new AIChatAssistantService(_db, _configMock.Object, _httpFactoryMock.Object, _loggerMock.Object);
+
+        var res = await svc.ChatAsync("test-user-id", "Hello", new List<ChatTurn>());
+        res.Should().Be("Hello from Ollama!");
+    }
+
+    [Fact]
+    public async Task ChatAsync_OpenRouterApiKeyProvided_CallsOpenRouterApi()
+    {
+        SetupEmptyKeys();
+        _configMock.Setup(c => c["AI:OpenRouterApiKey"]).Returns("openrouter-test-key");
+
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString().Contains("openrouter.ai")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(
+                    "{\"choices\":[{\"message\":{\"content\":\"Hello from OpenRouter!\"}}]}",
+                    System.Text.Encoding.UTF8,
+                    "application/json"
+                )
+            });
+
+        var client = new HttpClient(handlerMock.Object);
+        _httpFactoryMock.Setup(f => f.CreateClient("AIClient")).Returns(client);
+
+        var svc = new AIChatAssistantService(_db, _configMock.Object, _httpFactoryMock.Object, _loggerMock.Object);
+
+        var res = await svc.ChatAsync("test-user-id", "Hello", new List<ChatTurn>());
+        res.Should().Be("Hello from OpenRouter!");
+    }
+
+    [Fact]
+    public async Task ChatAsync_ClaudeApiKeyProvided_CallsClaudeApi()
+    {
+        SetupEmptyKeys();
+        _configMock.Setup(c => c["AI:ClaudeApiKey"]).Returns("claude-test-key");
+
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString().Contains("api.anthropic.com")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(
+                    "{\"content\":[{\"text\":\"Hello from Claude!\"}]}",
+                    System.Text.Encoding.UTF8,
+                    "application/json"
+                )
+            });
+
+        var client = new HttpClient(handlerMock.Object);
+        _httpFactoryMock.Setup(f => f.CreateClient("AIClient")).Returns(client);
+
+        var svc = new AIChatAssistantService(_db, _configMock.Object, _httpFactoryMock.Object, _loggerMock.Object);
+
+        var res = await svc.ChatAsync("test-user-id", "Hello", new List<ChatTurn>());
+        res.Should().Be("Hello from Claude!");
     }
 }

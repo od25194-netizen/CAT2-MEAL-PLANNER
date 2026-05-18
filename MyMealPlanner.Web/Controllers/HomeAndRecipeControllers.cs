@@ -133,6 +133,7 @@ public class RecipeController : Controller
     }
 
     // ── Browse / Search ──────────────────────────────────────
+    [AllowAnonymous]
     public async Task<IActionResult> Index(
         string? q,
         string? country,

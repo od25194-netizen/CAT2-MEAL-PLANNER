@@ -9,6 +9,20 @@
   "orientation": "portrait-primary",
   "lang": "en",
   "categories": ["food", "health", "lifestyle"],
+  "icons": [
+    {
+      "src": "/images/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Browse Recipes",

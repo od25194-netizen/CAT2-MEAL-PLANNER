@@ -21,6 +21,8 @@ appsettings.Production.json
 *.mdf
 *.ldf
 *.ndf
+*.db
+*.sqlite
 
 # Docker
 .dockerignore

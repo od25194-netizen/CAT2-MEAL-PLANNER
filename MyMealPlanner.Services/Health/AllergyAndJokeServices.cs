@@ -23,7 +23,7 @@ public class AllergyService : IAllergyService
         [AllergenType.Gluten]    = ["soy sauce", "malt", "beer", "barley", "seitan", "spelt", "wheat starch", "rye"],
         [AllergenType.Milk]      = ["butter", "cream", "ghee", "casein", "whey", "lactose", "curd", "paneer"],
         [AllergenType.Eggs]      = ["mayonnaise", "meringue", "albumin", "lecithin (egg)", "caesar dressing"],
-        [AllergenType.Peanuts]   = ["peanut oil", "groundnut oil", "mixed nuts", "satay sauce", "some curries"],
+        [AllergenType.Peanuts]   = ["peanut", "groundnut", "mixed nuts", "satay sauce", "some curries"],
         [AllergenType.Soy]       = ["edamame", "miso", "tofu", "tempeh", "soy lecithin", "some margarines"],
         [AllergenType.Shellfish] = ["worcestershire sauce", "some fish sauces", "caesar dressing"],
         [AllergenType.Sesame]    = ["tahini", "hummus", "sesame oil", "some salad dressings"],
@@ -78,14 +78,14 @@ public class AllergyService : IAllergyService
 
             // Direct match
             string? directMatch = ingredients.FirstOrDefault(ing =>
-                ing.Contains(allergenStr.ToLowerInvariant()) ||
-                ing.Contains(allergenType.ToString().ToLowerInvariant()));
+                ing.Contains(allergenStr, StringComparison.OrdinalIgnoreCase) ||
+                ing.Contains(allergenType.ToString(), StringComparison.OrdinalIgnoreCase));
 
             // Hidden source match
             string? hiddenSource = null;
             if (HiddenSources.TryGetValue(allergenType, out var sources))
                 hiddenSource = ingredients.FirstOrDefault(ing =>
-                    sources.Any(s => ing.Contains(s.ToLowerInvariant())));
+                    sources.Any(s => ing.Contains(s, StringComparison.OrdinalIgnoreCase)));
 
             if (directMatch != null || hiddenSource != null)
             {

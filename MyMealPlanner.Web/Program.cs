@@ -1,5 +1,6 @@
 using Hangfire;
 using Hangfire.MemoryStorage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
@@ -267,7 +268,16 @@ try
     app.UseAuthorization();
     app.UseSerilogRequestLogging();
 
-    app.MapGet("/health", () => Results.Ok(new { status = "healthy", time = DateTime.UtcNow }));
+    app.Use(async (context, next) =>
+    {
+        if (context.Request.Path == "/health")
+        {
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync("{\"status\":\"healthy\",\"time\":\"" + DateTime.UtcNow.ToString("o") + "\"}");
+            return;
+        }
+        await next();
+    });
     app.UseHangfireDashboard("/admin/jobs", new DashboardOptions { Authorization = new[] { new HangfireAuthFilter() } });
 
     app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");

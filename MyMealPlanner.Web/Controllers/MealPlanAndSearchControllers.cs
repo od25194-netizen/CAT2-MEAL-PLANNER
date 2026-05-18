@@ -228,17 +228,17 @@ public class MealPlanController : Controller
         await _db.SaveChangesAsync();
     }
 
-    private static string GuessStoreSection(string name) =>
-        name.ToLowerInvariant() switch
-        {
-            var n when new[] { "apple","banana","tomato","onion","garlic","carrot","pepper","lettuce","spinach" }.Any(n.Contains) => "Produce",
-            var n when new[] { "chicken","beef","pork","lamb","fish","prawn","shrimp","salmon","tuna" }.Any(n.Contains) => "Meat & Fish",
-            var n when new[] { "milk","yoghurt","cream","cheese","butter","egg" }.Any(n.Contains) => "Dairy & Eggs",
-            var n when new[] { "rice","pasta","flour","oat","bread","noodle" }.Any(n.Contains) => "Grains & Staples",
-            var n when new[] { "oil","salt","pepper","spice","herb","cumin","turmeric","paprika","ginger" }.Any(n.Contains) => "Spices & Oils",
-            var n when new[] { "can","tin","sauce","paste","stock","broth" }.Any(n.Contains) => "Canned & Sauces",
-            _ => "Other"
-        };
+    private static string GuessStoreSection(string name)
+    {
+        var n = name.ToLowerInvariant();
+        if (new[] { "can", "tin", "sauce", "paste", "stock", "broth" }.Any(x => n.Contains(x))) return "Canned & Sauces";
+        if (new[] { "chicken", "beef", "pork", "lamb", "fish", "prawn", "shrimp", "salmon", "tuna" }.Any(x => n.Contains(x))) return "Meat & Fish";
+        if (new[] { "milk", "yoghurt", "cream", "cheese", "butter", "egg" }.Any(x => n.Contains(x))) return "Dairy & Eggs";
+        if (new[] { "rice", "pasta", "flour", "oat", "bread", "noodle" }.Any(x => n.Contains(x))) return "Grains & Staples";
+        if (new[] { "apple", "banana", "tomato", "onion", "garlic", "carrot", "pepper", "lettuce", "spinach" }.Any(x => n.Contains(x))) return "Produce";
+        if (new[] { "oil", "salt", "spice", "herb", "cumin", "turmeric", "paprika", "ginger" }.Any(x => n.Contains(x))) return "Spices & Oils";
+        return "Other";
+    }
 }
 
 public class AddMealItemRequest
@@ -258,10 +258,10 @@ public class SearchApiController : Controller
 
     public SearchApiController(ApplicationDbContext db) => _db = db;
 
-    [HttpGet("")]
+    [HttpGet(""), AllowAnonymous]
     public async Task<IActionResult> Search([FromQuery] string q, [FromQuery] int limit = 8)
     {
-        if (string.IsNullOrWhiteSpace(q)) return Json(Array.Empty<object>());
+        if (string.IsNullOrWhiteSpace(q)) return Content("[]", "application/json");
 
         var results = await _db.Recipes
             .Where(r => r.IsPublished && (
@@ -282,7 +282,8 @@ public class SearchApiController : Controller
             })
             .ToListAsync();
 
-        return Json(results);
+        var json = System.Text.Json.JsonSerializer.Serialize(results);
+        return Content(json, "application/json");
     }
 
     [HttpPost("image")]
